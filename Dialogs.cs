@@ -8,27 +8,48 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace PadDesk {
+    // Shared palette helpers and native window chrome tweaks.
+    public static class Theme {
+        [System.Runtime.InteropServices.DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd,int attr,ref int value,int size);
+        public static SolidColorBrush Brush(string hex){var b=new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));b.Freeze();return b;}
+        public static readonly FontFamily Display=new FontFamily("Georgia, Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun");
+        public static readonly FontFamily SerifCn=new FontFamily("Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun");
+        // Dark caption that matches the ink ground (Windows 11 colours it exactly; Windows 10 falls back to dark mode).
+        public static void Apply(Window window){
+            try{
+                IntPtr h=new System.Windows.Interop.WindowInteropHelper(window).Handle;if(h==IntPtr.Zero)return;
+                int on=1,round=2,caption=0x00151211,text=0x00DBE6EC;
+                DwmSetWindowAttribute(h,20,ref on,4);DwmSetWindowAttribute(h,33,ref round,4);
+                DwmSetWindowAttribute(h,35,ref caption,4);DwmSetWindowAttribute(h,36,ref text,4);
+            }catch{}
+        }
+    }
     public class DialogBase : Window {
         protected readonly StackPanel Panel=new StackPanel();
         protected readonly TextBlock Head,Hint,Status;
-        protected readonly StackPanel Buttons=new StackPanel {Orientation=Orientation.Horizontal,HorizontalAlignment=HorizontalAlignment.Right,Margin=new Thickness(0,22,0,0)};
+        protected readonly StackPanel Buttons=new StackPanel {Orientation=Orientation.Horizontal,HorizontalAlignment=HorizontalAlignment.Right,Margin=new Thickness(0,24,0,0)};
         public DialogBase(Window owner,string title,string hint) {
-            Owner=owner;Title=title;Width=560;SizeToContent=SizeToContent.Height;ResizeMode=ResizeMode.NoResize;WindowStartupLocation=WindowStartupLocation.CenterOwner;
-            FontFamily=new FontFamily("Microsoft YaHei UI");FontSize=14;Background=new SolidColorBrush(Color.FromRgb(246,248,252));Foreground=new SolidColorBrush(Color.FromRgb(23,36,61));Resources=owner.Resources;
-            Panel.Margin=new Thickness(28);Content=Panel;
-            Head=new TextBlock {Text=title,FontSize=23,FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap};Panel.Children.Add(Head);
-            Hint=new TextBlock {Text=hint,Margin=new Thickness(0,13,0,22),TextWrapping=TextWrapping.Wrap,Foreground=Brushes.SlateGray};Panel.Children.Add(Hint);
-            Status=new TextBlock {TextWrapping=TextWrapping.Wrap,FontSize=15,Margin=new Thickness(0,12,0,0)};
+            Owner=owner;Title=title;Width=580;SizeToContent=SizeToContent.Height;ResizeMode=ResizeMode.NoResize;WindowStartupLocation=WindowStartupLocation.CenterOwner;ShowInTaskbar=false;
+            FontFamily=owner.FontFamily;FontSize=14;Background=Theme.Brush("#16171B");Foreground=Theme.Brush("#ECE6DB");Resources=owner.Resources;
+            UseLayoutRounding=true;TextOptions.SetTextFormattingMode(this,TextFormattingMode.Display);
+            SourceInitialized+=delegate{Theme.Apply(this);};
+            PreviewKeyDown+=delegate(object s,KeyEventArgs e){if(e.Key==Key.Escape && !(this is KeyDialog)){Close();e.Handled=true;}};
+            Panel.Margin=new Thickness(32,26,32,28);Content=Panel;
+            var seal=new Border {Width=22,Height=3,Background=Theme.Brush("#D9502F"),HorizontalAlignment=HorizontalAlignment.Left,CornerRadius=new CornerRadius(1.5),Margin=new Thickness(0,0,0,16)};Panel.Children.Add(seal);
+            Head=new TextBlock {Text=title,FontFamily=Theme.SerifCn,FontSize=24,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap};Panel.Children.Add(Head);
+            Hint=new TextBlock {Text=hint,Margin=new Thickness(0,10,0,22),TextWrapping=TextWrapping.Wrap,FontSize=13,LineHeight=21,Foreground=Theme.Brush("#9C968C")};Panel.Children.Add(Hint);
+            Status=new TextBlock {TextWrapping=TextWrapping.Wrap,FontSize=13,Foreground=Theme.Brush("#9C968C"),Margin=new Thickness(0,14,0,0)};
         }
-        protected Button Button(string text,Action action,bool primary=false) {var b=new Button {Content=text,Margin=new Thickness(8,0,0,0),Padding=new Thickness(16,9,16,9)};if(primary){b.Background=new SolidColorBrush(Color.FromRgb(83,101,233));b.Foreground=Brushes.White;}b.Click+=delegate{action();};Buttons.Children.Add(b);return b;}
+        protected Button Button(string text,Action action,bool primary=false) {var b=new Button {Content=text,Margin=new Thickness(10,0,0,0),Padding=new Thickness(18,0,18,0)};if(primary)b.Style=(Style)Resources["Primary"];b.Click+=delegate{action();};Buttons.Children.Add(b);return b;}
         protected void FinishLayout(){Panel.Children.Add(Status);Panel.Children.Add(Buttons);}
     }
     public sealed class KeyDialog : DialogBase {
         public int[] Keys {get;private set;}
         readonly TextBlock preview;readonly ComboBox manual;
         public KeyDialog(Window owner,int[] existing):base(owner,"选择键盘输出","在这里按下一个键或组合键。输出会与手柄同步：按下保持，松开弹起。") {
-            Keys=(int[])existing.Clone();preview=new TextBlock {Text=KeyNames.Chord(Keys),FontSize=27,FontWeight=FontWeights.SemiBold,HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,6,0,20)};Panel.Children.Add(preview);
-            Panel.Children.Add(new TextBlock {Text="也可直接选择键盘键（包含 Esc、Win 等）",Foreground=Brushes.SlateGray,Margin=new Thickness(0,0,0,8)});
+            Keys=(int[])existing.Clone();preview=new TextBlock {Text=KeyNames.Chord(Keys),FontFamily=new FontFamily("Cascadia Mono, Consolas"),FontSize=26,FontWeight=FontWeights.SemiBold,HorizontalAlignment=HorizontalAlignment.Center};
+            Panel.Children.Add(new Border {Background=Theme.Brush("#0D0E10"),BorderBrush=Theme.Brush("#34363D"),BorderThickness=new Thickness(1,1,1,3),CornerRadius=new CornerRadius(12),Padding=new Thickness(20,26,20,26),Margin=new Thickness(0,0,0,22),Child=preview});
+            Panel.Children.Add(new TextBlock {Text="也可直接选择键盘键（包含 Esc、Win 等）",FontSize=12,Foreground=Theme.Brush("#66625C"),Margin=new Thickness(0,0,0,8)});
             manual=new ComboBox {MaxDropDownHeight=240};
             foreach(int vk in Enumerable.Range(8,247).Where(k=>k<=254))manual.Items.Add(new ComboBoxItem {Content=KeyNames.Name(vk),Tag=vk});
             manual.SelectionChanged+=delegate{if(manual.SelectedItem!=null){Keys=new[]{(int)((ComboBoxItem)manual.SelectedItem).Tag};preview.Text=KeyNames.Chord(Keys);}};Panel.Children.Add(manual);
@@ -52,14 +73,14 @@ namespace PadDesk {
         public CalibrationDialog(Window owner,Profile p,Snapshot initial,bool locate,Func<Source,string,string> assign,Action<Snapshot> recordNeutral):base(owner,locate?"按实体键定位":"逐个对准实体按键",locate?"先松开全部按键、扳机和摇杆并记录中立状态，再按要设置的实体键。此时不会发送鼠标或键盘事件。":"先松开全部按键、扳机和摇杆并记录中立状态，再按提示校准。没有的键可跳过；方向键保持原配置。") {
             profile=p;this.locate=locate;this.assign=assign;this.recordNeutral=recordNeutral;current=initial;neutral=initial.Clone();
             Width=650;
-            controllerView=new ControllerView {Height=275,GuidanceMode=true,Margin=new Thickness(0,0,0,8)};Panel.Children.Add(controllerView);controllerView.SetLayout(profile.VisualLayout);controllerView.FocusControl(null);
+            controllerView=new ControllerView {Height=300,GuidanceMode=true,Margin=new Thickness(-32,0,-32,8)};Panel.Children.Add(controllerView);controllerView.SetLayout(profile.VisualLayout);controllerView.FocusControl(null);
             advance.Interval=TimeSpan.FromMilliseconds(380);advance.Tick+=delegate{advance.Stop();advancing=false;Next();};Closed+=delegate{advance.Stop();};
             foreach(var m in p.Mappings.Where(m=>m.Input.Kind=="Axis" && m.Input.Index<neutral.Axes.Length))neutral.Axes[m.Input.Index]=(short)m.Input.Rest;
             detector=new CaptureDetector(neutral,p.StickX,p.StickY);
             var list=new List<string>{"A","B","X","Y","L1 / LB","R1 / RB","L2 / LT","R2 / RT","返回 / Select","开始 / Start","左摇杆按下","右摇杆按下","Home","Capture"};
             int extra=Math.Max(0,p.Mappings.Count(m=>!m.Locked && m.Input.Kind=="Button")-14);for(int i=0;i<extra;i++)list.Add("额外按钮 "+(i+1));labels=list.ToArray();
-            prompt=new TextBlock {FontSize=24,FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,8,0,15)};Panel.Children.Add(prompt);
-            progress=new ProgressBar {Minimum=0,Maximum=labels.Length,Height=6,Foreground=new SolidColorBrush(Color.FromRgb(83,101,233))};if(!locate)Panel.Children.Add(progress);
+            prompt=new TextBlock {FontFamily=Theme.SerifCn,FontSize=24,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,10,0,16)};Panel.Children.Add(prompt);
+            progress=new ProgressBar {Minimum=0,Maximum=labels.Length};if(!locate)Panel.Children.Add(progress);
             Button("结束",delegate{Close();});skip=Button("跳过此键",Next);skip.IsEnabled=false;if(locate)skip.Visibility=Visibility.Collapsed;
             neutralButton=Button("记录松开状态",delegate{if(!current.Connected || current.DeviceId!=profile.DeviceId)return;if(current.Buttons.Any(b=>b) || current.Hats.Any(h=>h!=0)){Status.Text="请先松开所有手柄按键和方向键。";return;}neutral=current.Clone();recordNeutral(neutral);detector=new CaptureDetector(neutral,profile.StickX,profile.StickY);started=true;neutralButton.Visibility=Visibility.Collapsed;skip.IsEnabled=true;UpdatePrompt();},true);
             FinishLayout();prompt.Text="松开全部输入后，记录中立状态";Status.Text="请让两个摇杆自然回中，并完全松开两个扳机。";
@@ -76,7 +97,7 @@ namespace PadDesk {
         Snapshot current,neutral;int stage;readonly TextBlock prompt;readonly Button center;
         public StickDialog(Window owner,Profile p,Snapshot initial):base(owner,"校准左摇杆","依次记录回中位置、向右和向下方向。校准期间鼠标与键盘输出均暂停。") {
             current=initial;X=p.StickX;Y=p.StickY;
-            prompt=new TextBlock {Text="① 松开摇杆，让它自然回中",FontSize=23,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,10,0,20)};Panel.Children.Add(prompt);
+            prompt=new TextBlock {Text="① 松开摇杆，让它自然回中",FontFamily=Theme.SerifCn,FontSize=22,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,10,0,20)};Panel.Children.Add(prompt);
             Button("取消",delegate{DialogResult=false;});center=Button("记录中心",delegate{if(stage==4){DialogResult=true;return;}if(!current.Connected || current.Axes.Length<2){Status.Text="没有检测到两个摇杆轴。";return;}neutral=current.Clone();stage=1;center.IsEnabled=false;prompt.Text="② 将左摇杆向右推到边缘";},true);FinishLayout();
         }
         public void Poll(Snapshot s){current=s;if(!s.Connected){Status.Text="手柄已断开，请取消后重新连接。";return;}if(stage==0 || neutral==null)return;

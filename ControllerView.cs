@@ -17,7 +17,7 @@ namespace PadDesk {
             public Model3DGroup Model=new Model3DGroup();
             public TranslateTransform3D Press=new TranslateTransform3D();
             public AxisAngleRotation3D Tilt=new AxisAngleRotation3D(new Vector3D(1,0,0),0);
-            public SolidColorBrush Glow=new SolidColorBrush(Color.FromArgb(0,85,224,255));
+            public SolidColorBrush Glow=new SolidColorBrush(Color.FromArgb(0,236,112,72));
             public double Amount;public bool Active;
         }
         readonly Viewport3D viewport=new Viewport3D();
@@ -40,24 +40,35 @@ namespace PadDesk {
 
         public ControllerView() {
             MinHeight=240;ClipToBounds=true;
-            Background=new RadialGradientBrush(Color.FromRgb(38,60,91),Color.FromRgb(10,18,33)) {Center=new Point(.42,.38),GradientOrigin=new Point(.4,.3),RadiusX=.8,RadiusY=.85};
-            // Restrained floor halo gives the model depth without a bitmap backdrop.
-            var halo=new System.Windows.Shapes.Ellipse {Height=65,Margin=new Thickness(40,0,40,40),VerticalAlignment=VerticalAlignment.Bottom,IsHitTestVisible=false,
-                Fill=new RadialGradientBrush(Color.FromArgb(85,45,178,209),Colors.Transparent)};
+            Background=new RadialGradientBrush(Color.FromRgb(36,37,42),Color.FromRgb(17,18,21)) {Center=new Point(.5,.46),GradientOrigin=new Point(.5,.4),RadiusX=.62,RadiusY=.72};
+            // Moon-gate rings frame the controller; a warm floor glow gives it weight.
+            foreach(var ring in new[]{new {Inset=.06,Alpha=(byte)38},new {Inset=.13,Alpha=(byte)18}}) {
+                var gate=new System.Windows.Shapes.Ellipse {IsHitTestVisible=false,StrokeThickness=1,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,
+                    Stroke=new LinearGradientBrush(Color.FromArgb(ring.Alpha,236,230,219),Color.FromArgb(0,236,230,219),90)};
+                var inset=ring.Inset;SizeChanged+=delegate{double d=Math.Max(0,Math.Min(ActualWidth,ActualHeight)*(1-2*inset));gate.Width=d;gate.Height=d;};
+                Children.Add(gate);
+            }
+            var halo=new System.Windows.Shapes.Ellipse {Height=60,Margin=new Thickness(80,0,80,92),VerticalAlignment=VerticalAlignment.Bottom,IsHitTestVisible=false,
+                Fill=new RadialGradientBrush(Color.FromArgb(42,217,120,80),Colors.Transparent)};
             Children.Add(halo);Children.Add(viewport);viewport.Camera=camera;
+            // Top and bottom fades keep overlay text legible when the camera moves in close.
+            Children.Add(new System.Windows.Shapes.Rectangle {Height=140,VerticalAlignment=VerticalAlignment.Top,IsHitTestVisible=false,
+                Fill=new LinearGradientBrush(Color.FromArgb(235,17,18,21),Color.FromArgb(0,17,18,21),90)});
+            Children.Add(new System.Windows.Shapes.Rectangle {Height=120,VerticalAlignment=VerticalAlignment.Bottom,IsHitTestVisible=false,
+                Fill=new LinearGradientBrush(Color.FromArgb(0,17,18,21),Color.FromArgb(220,17,18,21),90)});
             viewport.Children.Add(new ModelVisual3D {Content=scene});
-            scene.Children.Add(new AmbientLight(Color.FromRgb(92,104,127)));
-            scene.Children.Add(new DirectionalLight(Color.FromRgb(255,245,229),new Vector3D(-.5,-1,-2)));
-            scene.Children.Add(new DirectionalLight(Color.FromRgb(107,195,242),new Vector3D(2,.3,-1)));
-            scene.Children.Add(new DirectionalLight(Color.FromRgb(149,127,235),new Vector3D(-1,2,.5)));
+            scene.Children.Add(new AmbientLight(Color.FromRgb(88,86,84)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(255,243,226),new Vector3D(-.5,-1,-2)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(118,132,150),new Vector3D(2,.3,-1)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(168,118,92),new Vector3D(-1,2,.5)));
             BuildController();
-            var badge=new Border {Background=new SolidColorBrush(Color.FromArgb(170,10,18,33)),CornerRadius=new CornerRadius(8),Padding=new Thickness(11,6,11,6),Margin=new Thickness(14),HorizontalAlignment=HorizontalAlignment.Left,VerticalAlignment=VerticalAlignment.Top,IsHitTestVisible=false};
-            badge.Child=modelBadge=new TextBlock {Text="XBOX  /  3D",Foreground=Brush("#87DCEC"),FontSize=10,FontWeight=FontWeights.SemiBold};Children.Add(badge);
-            var caption=new StackPanel {Margin=new Thickness(16,0,16,12),VerticalAlignment=VerticalAlignment.Bottom,IsHitTestVisible=false};
-            title=new TextBlock {Text="Xbox 标准布局",Foreground=Brushes.White,FontSize=15,FontWeight=FontWeights.SemiBold};
-            subtitle=new TextBlock {Text="点选按键聚焦 · 拖动旋转",Foreground=Brush("#8FA4BF"),FontSize=11,Margin=new Thickness(0,4,0,0),TextWrapping=TextWrapping.Wrap};
-            caption.Children.Add(title);caption.Children.Add(subtitle);Children.Add(caption);
-            var reset=new Button {Content="全貌 ↺",FontSize=11,Padding=new Thickness(9,5,9,5),Margin=new Thickness(12),HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Top,Background=Brush("#23334B"),Foreground=Brush("#D0DEEF"),BorderBrush=Brush("#3C506A"),ToolTip="回到手柄全貌"};
+            var caption=new StackPanel {Margin=new Thickness(28,22,0,0),MaxWidth=360,VerticalAlignment=VerticalAlignment.Top,HorizontalAlignment=HorizontalAlignment.Left,IsHitTestVisible=false};
+            modelBadge=new TextBlock {Text="XBOX",Foreground=Brush("#D9502F"),FontSize=10.5,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,6)};
+            title=new TextBlock {Text="Xbox 标准布局",Foreground=Brush("#ECE6DB"),FontSize=26,FontFamily=new FontFamily("Georgia, Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun"),TextTrimming=TextTrimming.CharacterEllipsis};
+            subtitle=new TextBlock {Text="点选按键聚焦 · 拖动旋转",Foreground=Brush("#8A857C"),FontSize=12,Margin=new Thickness(0,6,0,0),TextWrapping=TextWrapping.Wrap};
+            caption.Children.Add(modelBadge);caption.Children.Add(title);caption.Children.Add(subtitle);Children.Add(caption);
+            caption.Effect=new System.Windows.Media.Effects.DropShadowEffect {BlurRadius=14,ShadowDepth=0,Opacity=.85,Color=Color.FromRgb(10,10,12)};
+            var reset=new Button {Content="\uE740",FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=13,Width=40,Height=34,MinHeight=34,Padding=new Thickness(0),Margin=new Thickness(0,22,24,0),HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Top,Background=Brush("#AA111215"),Foreground=Brush("#ECE6DB"),BorderBrush=Brush("#34363D"),BorderThickness=new Thickness(1),Cursor=Cursors.Hand,ToolTip="回到全貌"};
             reset.Click+=delegate{if(GuidanceMode){yaw=.21;pitch=.03;targetLook=OverviewLook;targetEye=OverviewEye;}else FocusControl(null);};Children.Add(reset);
             viewport.MouseLeftButtonDown+=MouseDownOnModel;viewport.MouseMove+=MouseMoveOnModel;viewport.MouseLeftButtonUp+=MouseUpOnModel;
             viewport.LostMouseCapture+=delegate{dragging=false;};
@@ -69,19 +80,19 @@ namespace PadDesk {
             string next=value=="Photo"?"Photo":"Xbox"; if(next==layout)return;
             layout=next;while(scene.Children.Count>4)scene.Children.RemoveAt(4);
             parts.Clear();hitKeys.Clear();BuildController();
-            modelBadge.Text=layout=="Photo"?"SWITCH PRO  /  3D":"XBOX  /  3D";
+            modelBadge.Text=layout=="Photo"?"SWITCH PRO":"XBOX";
             FocusControl(null);
         }
         static SolidColorBrush Brush(string hex) {var b=new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));b.Freeze();return b;}
         static Material Surface(string hex,double shine) {
             var group=new MaterialGroup();group.Children.Add(new DiffuseMaterial(Brush(hex)));
-            group.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(110,201,220,240)),shine));group.Freeze();return group;
+            group.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(96,244,236,224)),shine));group.Freeze();return group;
         }
         static GeometryModel3D Geometry(MeshGeometry3D mesh,Material material) {return new GeometryModel3D(mesh,material);}
         void AddStatic(MeshGeometry3D mesh,Material material) {scene.Children.Add(Geometry(mesh,material));}
 
         void BuildController() {
-            bool photo=layout=="Photo"; var shell=Surface(photo?"#42474E":"#D5DEE7",42);var dark=Surface("#171E28",28);var rubber=Surface("#252A32",9);
+            bool photo=layout=="Photo"; var shell=Surface(photo?"#3C3E43":"#DAD5CC",42);var dark=Surface("#18191C",28);var rubber=Surface("#26272B",9);
             var outline=new List<Point>();
             // Smooth Xbox-style shoulder lobes, tapered grips and recessed lower bridge.
             Bezier(outline,new Point(0,1.35),new Point(.9,1.35),new Point(1.6,1.72),new Point(2.24,1.39));
@@ -101,7 +112,7 @@ namespace PadDesk {
             AddStatic(Shell(outline,new[]{.01,.25,.45,.65,.78,.86,.92,.96,.985,1.0},new[]{.63,.63,.62,.60,.56,.50,.41,.31,.19,.05}),shell);
             AddStatic(Shell(outline,new[]{1.0,.995,.96,.85,.03},new[]{.035,-.05,-.28,-.47,-.48}),dark);
             // Fine perimeter seam and sculpted dark grip inserts.
-            AddStatic(Shell(outline,new[]{.998,1.002},new[]{.052,.015}),Surface("#65738A",35));
+            AddStatic(Shell(outline,new[]{.998,1.002},new[]{.052,.015}),Surface("#6E6A64",35));
             foreach(int side in new[]{-1,1}) {
                 AddStatic(Grip(side),rubber);
                 // Fine rubber stippling follows the curved grip face.
@@ -119,29 +130,29 @@ namespace PadDesk {
                     texture.Positions.Add(new Point3D(side*(x+.007),y,z));
                     if(side>0)Triangle(texture,n,n+1,n+2);else Triangle(texture,n+2,n+1,n);
                 }
-                Finish(texture);AddStatic(texture,Surface("#50555E",6));
+                Finish(texture);AddStatic(texture,Surface("#504E4B",6));
             }
             Stick("LS",-1.72,.55);Stick("RS",.97,-.65);
-            if(!photo){AddStatic(Cylinder(new Point3D(-1.02,-.69,.57),.59,.055),Surface("#6D7B8F",45));
+            if(!photo){AddStatic(Cylinder(new Point3D(-1.02,-.69,.57),.59,.055),Surface("#77726A",45));
             AddStatic(Cylinder(new Point3D(-1.02,-.69,.61),.51,.07),dark);}
-            AddButton("UP",-1.02,-.36,.71,.20,"↑","#3E4D60",true);
-            AddButton("DOWN",-1.02,-1.02,.71,.20,"↓","#3E4D60",true);
-            AddButton("LEFT",-1.35,-.69,.71,.20,"←","#3E4D60",true);
-            AddButton("RIGHT",-.69,-.69,.71,.20,"→","#3E4D60",true);
-            AddStatic(photo?FlatBox(new Point3D(-1.02,-.69,.71),.34,.34,.16):Cylinder(new Point3D(-1.02,-.69,.69),.24,.08),Surface(photo?"#242A31":"#3E4D60",25));
-            AddButton(photo?"B":"A",1.8,.16,.64,.25,photo?"B":"A",photo?"#B7BDC3":"#69C65A",false);
-            AddButton(photo?"A":"B",2.25,.61,.61,.25,photo?"A":"B",photo?"#B7BDC3":"#EC696E",false);
-            AddButton(photo?"Y":"X",1.35,.61,.64,.25,photo?"Y":"X",photo?"#B7BDC3":"#54ABEF",false);
-            AddButton(photo?"X":"Y",1.8,1.06,.59,.25,photo?"X":"Y",photo?"#B7BDC3":"#F4CE55",false);
-            AddButton("View",photo?-.72:-.46,photo?1.02:.54,.64,.14,photo?"−":"▣","#A1ADB9",false);
-            AddButton("Menu",photo?.72:.46,photo?1.02:.54,.64,.14,photo?"+":"≡","#A1ADB9",false);
-            AddButton("Home",photo?.42:0,photo?.40:1.04,.63,photo?.16:.23,photo?"⌂":"X","#BACEDD",false);
-            AddButton("Share",photo?-.42:0,photo?.40:-.02,.64,.14,photo?"□":"↑","#A1ADB9",photo);
+            AddButton("UP",-1.02,-.36,.71,.20,"↑","#3A3B40",true);
+            AddButton("DOWN",-1.02,-1.02,.71,.20,"↓","#3A3B40",true);
+            AddButton("LEFT",-1.35,-.69,.71,.20,"←","#3A3B40",true);
+            AddButton("RIGHT",-.69,-.69,.71,.20,"→","#3A3B40",true);
+            AddStatic(photo?FlatBox(new Point3D(-1.02,-.69,.71),.34,.34,.16):Cylinder(new Point3D(-1.02,-.69,.69),.24,.08),Surface(photo?"#25262A":"#3A3B40",25));
+            AddButton(photo?"B":"A",1.8,.16,.64,.25,photo?"B":"A",photo?"#D6D0C5":"#86C47A",false);
+            AddButton(photo?"A":"B",2.25,.61,.61,.25,photo?"A":"B",photo?"#D6D0C5":"#E5735C",false);
+            AddButton(photo?"Y":"X",1.35,.61,.64,.25,photo?"Y":"X",photo?"#D6D0C5":"#7BAFD9",false);
+            AddButton(photo?"X":"Y",1.8,1.06,.59,.25,photo?"X":"Y",photo?"#D6D0C5":"#E9C46A",false);
+            AddButton("View",photo?-.72:-.46,photo?1.02:.54,.64,.14,photo?"−":"▣","#A39E95",false);
+            AddButton("Menu",photo?.72:.46,photo?1.02:.54,.64,.14,photo?"+":"≡","#A39E95",false);
+            AddButton("Home",photo?.42:0,photo?.40:1.04,.63,photo?.16:.23,photo?"⌂":"X","#D6D0C5",false);
+            AddButton("Share",photo?-.42:0,photo?.40:-.02,.64,.14,photo?"□":"↑","#A39E95",photo);
             Shoulder("LB",-1.76,photo?1.25:1.48,.32,false);Shoulder("RB",1.76,photo?1.25:1.48,.32,false);
             Shoulder("LT",-1.8,photo?1.36:1.57,-.25,true);Shoulder("RT",1.8,photo?1.36:1.57,-.25,true);
             if(photo) {
                 AddStatic(RoundedBox(new Point3D(0,1.23,-.06),.34,.12,.09),dark);
-                for(int i=0;i<4;i++)AddStatic(RoundedBox(new Point3D(-.15+i*.1,-.85,.43),.045,.025,.015),Surface(i==0?"#8CCB80":"#20262E",10));
+                for(int i=0;i<4;i++)AddStatic(RoundedBox(new Point3D(-.15+i*.1,-.85,.43),.045,.025,.015),Surface(i==0?"#86C5B3":"#202125",10));
             }
         }
         static double GripDepth(double x,double y) {
@@ -171,38 +182,40 @@ namespace PadDesk {
             parts.Add(key,p);scene.Children.Add(p.Model);return p;
         }
         void PartMesh(Part part,MeshGeometry3D mesh,Material material) {var g=Geometry(mesh,material);part.Model.Children.Add(g);hitKeys.Add(g,part.Key);}
-        void Ring(Part p,Point3D at,double radius) {PartMesh(p,Torus(at,radius,.035),new EmissiveMaterial(p.Glow));}
+        void Ring(Part p,Point3D at,double radius) {PartMesh(p,Torus(at,radius,.035),GlowMaterial(p));}
+        // Diffuse + emissive share the animated brush so the ring keeps its hue on the light shell instead of blowing out to white.
+        static Material GlowMaterial(Part p) {var g=new MaterialGroup();g.Children.Add(new DiffuseMaterial(p.Glow));g.Children.Add(new EmissiveMaterial(p.Glow));return g;}
         void AddButton(string key,double x,double y,double z,double radius,string text,string color,bool dpad) {
             var center=new Point3D(x,y,z);var p=NewPart(key,center,radius);
-            if(!(dpad && layout=="Photo"))AddStatic(Cylinder(new Point3D(x,y,z-.04),radius+.035,.06),Surface("#152033",20));
-            PartMesh(p,dpad?RoundedBox(center,radius*1.7,radius*1.7,.16):Cylinder(center,radius,.14),Surface(dpad?(layout=="Photo"?"#242A31":color):"#202631",32));
-            PartMesh(p,Disc(new Point3D(x,y,z+.165),radius*.7),Label(text,dpad?"#91A2B4":color));
+            if(!(dpad && layout=="Photo"))AddStatic(Cylinder(new Point3D(x,y,z-.04),radius+.035,.06),Surface("#151618",20));
+            PartMesh(p,dpad?RoundedBox(center,radius*1.7,radius*1.7,.16):Cylinder(center,radius,.14),Surface(dpad?(layout=="Photo"?"#25262A":color):"#1F2024",32));
+            PartMesh(p,Disc(new Point3D(x,y,z+.165),radius*.7),Label(text,dpad?"#A39E95":color));
             Ring(p,new Point3D(x,y,z+.04),radius+.055);
         }
         void Stick(string key,double x,double y) {
             var center=new Point3D(x,y,.65);var p=NewPart(key,center,.4);
-            AddStatic(Cylinder(new Point3D(x,y,.53),.53,.065),Surface("#728095",48));
-            AddStatic(Ellipsoid(new Point3D(x,y,.58),.46,.46,.14),Surface("#182232",20));
-            PartMesh(p,Cylinder(new Point3D(x,y,.6),.19,.31),Surface("#3C4959",50));
-            PartMesh(p,Cylinder(new Point3D(x,y,.87),.37,.12),Surface("#273341",14));
-            PartMesh(p,Torus(new Point3D(x,y,.995),.335,.048),Surface("#475362",12));
-            for(int i=0;i<4;i++)PartMesh(p,Torus(new Point3D(x,y,.994),.12+i*.043,.005),Surface("#343E49",7));
-            if(layout!="Photo")PartMesh(p,Disc(new Point3D(x,y,.998),.29),Label(key,"#92A3B6"));
-            for(int i=0;i<28;i++){double a=i*Math.PI*2/28;PartMesh(p,Ellipsoid(new Point3D(x+.356*Math.Cos(a),y+.356*Math.Sin(a),.953),.015,.015,.035),Surface("#788696",8));}
+            AddStatic(Cylinder(new Point3D(x,y,.53),.53,.065),Surface("#77726A",48));
+            AddStatic(Ellipsoid(new Point3D(x,y,.58),.46,.46,.14),Surface("#18191C",20));
+            PartMesh(p,Cylinder(new Point3D(x,y,.6),.19,.31),Surface("#3B3C40",50));
+            PartMesh(p,Cylinder(new Point3D(x,y,.87),.37,.12),Surface("#28292D",14));
+            PartMesh(p,Torus(new Point3D(x,y,.995),.335,.048),Surface("#46474B",12));
+            for(int i=0;i<4;i++)PartMesh(p,Torus(new Point3D(x,y,.994),.12+i*.043,.005),Surface("#35363A",7));
+            if(layout!="Photo")PartMesh(p,Disc(new Point3D(x,y,.998),.29),Label(key,"#8A857C"));
+            for(int i=0;i<28;i++){double a=i*Math.PI*2/28;PartMesh(p,Ellipsoid(new Point3D(x+.356*Math.Cos(a),y+.356*Math.Sin(a),.953),.015,.015,.035),Surface("#7A756D",8));}
             Ring(p,new Point3D(x,y,.65),.49);
         }
         void Shoulder(string key,double x,double y,double z,bool trigger) {
             var transform=new Transform3DGroup();transform.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1,0,0),-68)));
             transform.Children.Add(new TranslateTransform3D(x,y-.12,z));transform.Freeze();
             var p=NewPart(key,transform.Transform(new Point3D(0,0,.20)),.43);
-            var block=Geometry(RoundedBox(new Point3D(0,0,0),trigger?.84:1.17,trigger?.82:.35,.19),Surface(trigger?"#27364A":"#48586D",40));
+            var block=Geometry(RoundedBox(new Point3D(0,0,0),trigger?.84:1.17,trigger?.82:.35,.19),Surface(trigger?"#2B2C31":"#4A4B50",40));
             block.Transform=transform;p.Model.Children.Add(block);hitKeys.Add(block,key);
-            var label=Geometry(Disc(new Point3D(0,0,.202),trigger?.24:.18),Label(key,trigger?"#A7E6F4":"#E2EDF8"));
+            var label=Geometry(Disc(new Point3D(0,0,.202),trigger?.24:.18),Label(key,trigger?"#E8A48F":"#E6DFD3"));
             label.Transform=transform;p.Model.Children.Add(label);hitKeys.Add(label,key);
             // Rim follows the button surface, above the mesh so it cannot be occluded.
             var ringMesh=Torus(new Point3D(0,0,.205),1,.055).Clone();
             for(int i=0;i<ringMesh.Positions.Count;i++){var v=ringMesh.Positions[i];ringMesh.Positions[i]=new Point3D(v.X*(trigger?.37:.51),v.Y*(trigger?.35:.135),v.Z);}ringMesh.Freeze();
-            var ring=Geometry(ringMesh,new EmissiveMaterial(p.Glow));ring.Transform=transform;p.Model.Children.Add(ring);hitKeys.Add(ring,key);
+            var ring=Geometry(ringMesh,GlowMaterial(p));ring.Transform=transform;p.Model.Children.Add(ring);hitKeys.Add(ring,key);
         }
         static Material Label(string text,string color) {
             var drawing=new DrawingGroup();
@@ -224,7 +237,7 @@ namespace PadDesk {
                 bool shoulder=FocusedControl=="LT" || FocusedControl=="RT" || FocusedControl=="LB" || FocusedControl=="RB";
                 targetEye=p.Center+(shoulder?new Vector3D(p.Center.X*.15,4.2,3.6):new Vector3D(p.Center.X*.12,1.45,5.5));
             } else {FocusedControl=null;yaw=.21;pitch=.03;targetLook=OverviewLook;targetEye=OverviewEye;}
-            title.Text=FocusedControl==null?(layout=="Photo"?"Switch Pro · ABXY":"Xbox 标准布局"):ControllerLayout.Caption(FocusedControl,layout);
+            title.Text=FocusedControl==null?(GuidanceMode?"松开全部输入":"按下任意键"):ControllerLayout.Caption(FocusedControl,layout);
             subtitle.Text=GuidanceMode?(FocusedControl==null?"按对话框提示操作实体手柄":"请按实体手柄上发光的按键"):(FocusedControl==null?"按下实体键或点选模型聚焦 · 拖动旋转":"跟随新按键切换 · 松开保留焦点 · 全貌返回");
         }
         public void UpdateInput(Snapshot snapshot,Profile profile) {
@@ -257,7 +270,7 @@ namespace PadDesk {
                 p.Press.OffsetZ=shoulder?0:-p.Amount*.075;p.Press.OffsetY=shoulder?-p.Amount*.085:0;
                 bool focused=p.Key==FocusedControl;
                 byte alpha=p.Active?(byte)255:focused?(byte)(180+55*Math.Sin(now*4)): (byte)0;
-                p.Glow.Color=p.Active?Color.FromArgb(alpha,100,255,174):Color.FromArgb(alpha,78,211,255);
+                p.Glow.Color=p.Active?Color.FromArgb(alpha,134,214,190):Color.FromArgb(alpha,236,112,72);
             }
             TiltStick(parts["LS"],stickX,stickY,ease);TiltStick(parts["RS"],rightX,rightY,ease);
         }

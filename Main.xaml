@@ -1,16 +1,52 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="PadDesk · 手柄控制台" Width="1360" Height="820" MinWidth="1080" MinHeight="740" WindowStartupLocation="CenterScreen" Background="#EDF1F7" FontFamily="Microsoft YaHei UI" FontSize="13" Foreground="#17243D">
+<!--
+  PadDesk · 墨与朱
+  Warm ink ground, rice-paper type, a single vermilion seal accent, celadon for live input.
+  Latin display in Georgia, Chinese display in a serif Song face; body text in Segoe / YaHei.
+-->
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="PadDesk · 手柄控制台" Width="1360" Height="840" MinWidth="1080" MinHeight="740"
+        WindowStartupLocation="CenterScreen" Background="#111215" Foreground="#ECE6DB"
+        FontFamily="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI" FontSize="13"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True" SnapsToDevicePixels="True">
+  <shell:WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="56" ResizeBorderThickness="6" GlassFrameThickness="0,0,0,1" CornerRadius="0" UseAeroCaptionButtons="False" />
+  </shell:WindowChrome.WindowChrome>
   <Window.Resources>
-    <SolidColorBrush x:Key="Accent" Color="#5365E9" />
+    <!-- Palette -->
+    <Color x:Key="InkColor">#111215</Color>
+    <SolidColorBrush x:Key="Ink" Color="#111215" />
+    <SolidColorBrush x:Key="Well" Color="#0D0E10" />
+    <SolidColorBrush x:Key="Panel" Color="#16171B" />
+    <SolidColorBrush x:Key="Raised" Color="#1E2025" />
+    <SolidColorBrush x:Key="RaisedHover" Color="#25272D" />
+    <SolidColorBrush x:Key="Hairline" Color="#25272C" />
+    <SolidColorBrush x:Key="HairlineStrong" Color="#34363D" />
+    <SolidColorBrush x:Key="Paper" Color="#ECE6DB" />
+    <SolidColorBrush x:Key="Muted" Color="#9C968C" />
+    <SolidColorBrush x:Key="Faint" Color="#66625C" />
+    <SolidColorBrush x:Key="Vermilion" Color="#D9502F" />
+    <SolidColorBrush x:Key="VermilionHover" Color="#E5664A" />
+    <SolidColorBrush x:Key="Celadon" Color="#86C5B3" />
+    <SolidColorBrush x:Key="CeladonWash" Color="#1A2A27" />
+    <SolidColorBrush x:Key="Amber" Color="#D9A55A" />
+    <FontFamily x:Key="Display">Georgia, Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun</FontFamily>
+    <FontFamily x:Key="SerifCn">Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun</FontFamily>
+    <FontFamily x:Key="Mono">Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="Glyphs">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <!-- Buttons: quiet outline by default -->
     <Style TargetType="Button">
-      <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="MinHeight" Value="36" />
+      <Setter Property="Padding" Value="16,0" />
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Padding" Value="15,9" />
-      <Setter Property="Background" Value="White" />
-      <Setter Property="Foreground" Value="#243451" />
-      <Setter Property="BorderBrush" Value="#DFE4EE" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource Paper}" />
+      <Setter Property="BorderBrush" Value="{StaticResource HairlineStrong}" />
       <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
@@ -19,64 +55,162 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="bd" Property="Opacity" Value="0.8" />
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource RaisedHover}" />
+                <Setter TargetName="bd" Property="BorderBrush" Value="#46484F" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource Raised}" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Muted}" />
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="bd" Property="Opacity" Value="0.4" />
+                <Setter TargetName="bd" Property="Opacity" Value="0.38" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
+    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Foreground" Value="#FFF8F1" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="{StaticResource Vermilion}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.FontWeight="SemiBold" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource VermilionHover}" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#BF4427" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="bd" Property="Background" Value="#3A2A25" />
+                <Setter Property="Foreground" Value="#8C7A72" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Link" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <ContentPresenter x:Name="cp" VerticalAlignment="Center" />
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Paper}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Caption" TargetType="Button">
+      <Setter Property="Width" Value="46" />
+      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="FontFamily" Value="{StaticResource Glyphs}" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource RaisedHover}" />
+                <Setter Property="Foreground" Value="{StaticResource Paper}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="CaptionClose" TargetType="Button" BasedOn="{StaticResource Caption}">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#C42B1C" />
+                <Setter Property="Foreground" Value="White" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Text inputs -->
     <Style TargetType="TextBox">
+      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="Padding" Value="12,0" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="MinHeight" Value="36" />
-      <Setter Property="Padding" Value="10,8" />
-      <Setter Property="BorderBrush" Value="#DDE2ED" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Background" Value="White" />
+      <Setter Property="Foreground" Value="{StaticResource Paper}" />
+      <Setter Property="CaretBrush" Value="{StaticResource Vermilion}" />
+      <Setter Property="SelectionBrush" Value="#D9502F" />
+      <Setter Property="Background" Value="{StaticResource Well}" />
+      <Setter Property="BorderBrush" Value="{StaticResource HairlineStrong}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
-            <Border x:Name="frame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="{TemplateBinding Padding}">
-              <ScrollViewer x:Name="PART_ContentHost" />
+            <Border x:Name="frame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="frame" Property="BorderBrush" Value="#46484F" />
+              </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="frame" Property="BorderBrush" Value="#6475EE" />
+                <Setter TargetName="frame" Property="BorderBrush" Value="{StaticResource Vermilion}" />
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="frame" Property="Opacity" Value="0.45" />
+                <Setter TargetName="frame" Property="Opacity" Value="0.4" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- Dropdown (used by the keyboard picker dialog) -->
     <Style TargetType="ComboBox">
-      <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="MinHeight" Value="36" />
-      <Setter Property="Padding" Value="10,8" />
-      <Setter Property="BorderBrush" Value="#DDE2ED" />
-      <Setter Property="Background" Value="White" />
-      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="Foreground" Value="{StaticResource Paper}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ComboBox">
             <Grid>
-              <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+              <ToggleButton Focusable="False" ClickMode="Press" Cursor="Hand" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                 <ToggleButton.Template>
                   <ControlTemplate TargetType="ToggleButton">
-                    <Border Background="White" BorderBrush="#DDE2ED" BorderThickness="1" CornerRadius="7">
-                      <Path Data="M0,0 L4,4 L8,0" Stroke="#8290A6" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" />
+                    <Border x:Name="b" Background="#0D0E10" BorderBrush="#34363D" BorderThickness="1" CornerRadius="8">
+                      <Path Data="M0,0 L4,4 L8,0" Stroke="#9C968C" StrokeThickness="1.4" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" />
                     </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="b" Property="BorderBrush" Value="#46484F" />
+                      </Trigger>
+                    </ControlTemplate.Triggers>
                   </ControlTemplate>
                 </ToggleButton.Template>
               </ToggleButton>
-              <ContentPresenter Margin="10,7,28,7" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
+              <ContentPresenter Margin="12,0,32,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
               <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
-                <Border Background="White" BorderBrush="#DDE2ED" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Margin="0,4,0,0">
+                <Border Background="#1E2025" BorderBrush="#34363D" BorderThickness="1" CornerRadius="10" Padding="4" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="280" Margin="0,6,0,0">
                   <ScrollViewer CanContentScroll="True">
                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                   </ScrollViewer>
@@ -85,7 +219,7 @@
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.45" />
+                <Setter Property="Opacity" Value="0.4" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -93,37 +227,121 @@
       </Setter>
     </Style>
     <Style TargetType="ComboBoxItem">
-      <Setter Property="Padding" Value="9,7" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="Foreground" Value="{StaticResource Paper}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ComboBoxItem">
-            <Border x:Name="item" Padding="{TemplateBinding Padding}" CornerRadius="5" Background="Transparent">
+            <Border x:Name="item" Padding="{TemplateBinding Padding}" CornerRadius="6" Background="Transparent">
               <ContentPresenter />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsHighlighted" Value="True">
-                <Setter TargetName="item" Property="Background" Value="#EDF0FF" />
+                <Setter TargetName="item" Property="Background" Value="#2A2C33" />
               </Trigger>
               <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Foreground" Value="#5365E9" />
+                <Setter Property="Foreground" Value="#E5664A" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- Segmented control: ListBox with a single row -->
+    <Style x:Key="Segmented" TargetType="ListBox">
+      <Setter Property="Background" Value="{StaticResource Well}" />
+      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ItemsPanel">
+        <Setter.Value>
+          <ItemsPanelTemplate>
+            <UniformGrid Rows="1" />
+          </ItemsPanelTemplate>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBox">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" CornerRadius="9" Padding="3">
+              <ItemsPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="ItemContainerStyle">
+        <Setter.Value>
+          <Style TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource Muted}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                  <Border x:Name="b" CornerRadius="6" Background="Transparent" Padding="10,0" MinHeight="30">
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter Property="Foreground" Value="#D8D2C7" />
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                      <Setter TargetName="b" Property="Background" Value="#2A2C33" />
+                      <Setter Property="Foreground" Value="#F3EEE5" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Toggle switch -->
+    <Style x:Key="Switch" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Width="40" Height="22" Background="Transparent">
+              <Border x:Name="track" CornerRadius="11" Background="#2C2E34" />
+              <Ellipse x:Name="knob" Width="16" Height="16" Fill="#8A857C" HorizontalAlignment="Left" Margin="3,0" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="track" Property="Background" Value="#D9502F" />
+                <Setter TargetName="knob" Property="Fill" Value="#FFF8F1" />
+                <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Slider: hairline track, vermilion fill -->
     <Style TargetType="Slider">
-      <Setter Property="Height" Value="24" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Slider">
-            <Grid VerticalAlignment="Center">
+            <Grid VerticalAlignment="Center" Background="Transparent">
               <Track x:Name="PART_Track">
                 <Track.DecreaseRepeatButton>
-                  <RepeatButton Command="Slider.DecreaseLarge">
+                  <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
                     <RepeatButton.Template>
                       <ControlTemplate TargetType="RepeatButton">
-                        <Border Height="5" Background="#6375E8" CornerRadius="2" />
+                        <Grid Background="Transparent"><Border Height="3" Background="#D9502F" CornerRadius="1.5" /></Grid>
                       </ControlTemplate>
                     </RepeatButton.Template>
                   </RepeatButton>
@@ -132,16 +350,27 @@
                   <Thumb Width="16" Height="16">
                     <Thumb.Template>
                       <ControlTemplate TargetType="Thumb">
-                        <Ellipse Fill="White" Stroke="#6375E8" StrokeThickness="3" />
+                        <Grid>
+                          <Ellipse x:Name="halo" Fill="#33D9502F" Margin="-5" Visibility="Hidden" />
+                          <Ellipse Fill="#F3EEE5" Stroke="#D9502F" StrokeThickness="3" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="halo" Property="Visibility" Value="Visible" />
+                          </Trigger>
+                          <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="halo" Property="Visibility" Value="Visible" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
                       </ControlTemplate>
                     </Thumb.Template>
                   </Thumb>
                 </Track.Thumb>
                 <Track.IncreaseRepeatButton>
-                  <RepeatButton Command="Slider.IncreaseLarge">
+                  <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
                     <RepeatButton.Template>
                       <ControlTemplate TargetType="RepeatButton">
-                        <Border Height="5" Background="#E4E9F2" CornerRadius="2" />
+                        <Grid Background="Transparent"><Border Height="3" Background="#2C2E34" CornerRadius="1.5" /></Grid>
                       </ControlTemplate>
                     </RepeatButton.Template>
                   </RepeatButton>
@@ -152,270 +381,580 @@
         </Setter.Value>
       </Setter>
     </Style>
-    <Style TargetType="DataGridColumnHeader">
-      <Setter Property="Background" Value="#F5F7FC" />
-      <Setter Property="Foreground" Value="#7D899E" />
-      <Setter Property="Padding" Value="12,11" />
-      <Setter Property="BorderThickness" Value="0" />
-    </Style>
-    <Style TargetType="DataGridCell">
-      <Setter Property="Padding" Value="10,9" />
+
+    <Style TargetType="ProgressBar">
+      <Setter Property="Height" Value="3" />
+      <Setter Property="Foreground" Value="{StaticResource Vermilion}" />
+      <Setter Property="Background" Value="#2C2E34" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Template">
         <Setter.Value>
-          <ControlTemplate TargetType="DataGridCell">
-            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-              <ContentPresenter VerticalAlignment="Center" />
-            </Border>
+          <ControlTemplate TargetType="ProgressBar">
+            <Grid>
+              <Border x:Name="PART_Track" Background="{TemplateBinding Background}" CornerRadius="1.5" />
+              <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="1.5" HorizontalAlignment="Left" />
+            </Grid>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
-    <Style TargetType="DataGridRow">
-      <Setter Property="Background" Value="White" />
-      <Setter Property="Foreground" Value="#34445E" />
+
+    <!-- Slim scrollbars -->
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="MinWidth" Value="10" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Track x:Name="PART_Track" IsDirectionReversed="True">
+              <Track.Thumb>
+                <Thumb>
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Border x:Name="t" CornerRadius="3" Background="#2E3036" Margin="3,2" />
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="t" Property="Background" Value="#45474E" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+            </Track>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Active}" Value="True">
-          <Setter Property="Background" Value="#DEF5F0" />
-          <Setter Property="Foreground" Value="#007E68" />
-        </DataTrigger>
-        <Trigger Property="IsSelected" Value="True">
-          <Setter Property="Background" Value="#E9EDFF" />
-          <Setter Property="Foreground" Value="#3446B8" />
+        <Trigger Property="Orientation" Value="Horizontal">
+          <Setter Property="Width" Value="Auto" />
+          <Setter Property="MinWidth" Value="0" />
+          <Setter Property="Height" Value="10" />
+          <Setter Property="Template">
+            <Setter.Value>
+              <ControlTemplate TargetType="ScrollBar">
+                <Track x:Name="PART_Track">
+                  <Track.Thumb>
+                    <Thumb>
+                      <Thumb.Template>
+                        <ControlTemplate TargetType="Thumb">
+                          <Border CornerRadius="3" Background="#2E3036" Margin="2,3" />
+                        </ControlTemplate>
+                      </Thumb.Template>
+                    </Thumb>
+                  </Track.Thumb>
+                </Track>
+              </ControlTemplate>
+            </Setter.Value>
+          </Setter>
         </Trigger>
       </Style.Triggers>
     </Style>
+
+    <!-- Inspector tabs: text with a vermilion underline -->
+    <Style TargetType="TabControl">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabControl">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+              </Grid.RowDefinitions>
+              <Border BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,0,1" Padding="24,0">
+                <TabPanel IsItemsHost="True" />
+              </Border>
+              <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" />
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style TargetType="TabItem">
-      <Setter Property="Foreground" Value="#6C7B92" />
+      <Setter Property="Foreground" Value="{StaticResource Faint}" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TabItem">
-            <Border x:Name="tab" CornerRadius="8" Padding="22,10" Margin="0,0,8,0" Background="Transparent">
-              <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
+            <Grid Height="52" Margin="0,0,28,0" Background="Transparent">
+              <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
+              <Border x:Name="line" Height="2" VerticalAlignment="Bottom" Background="{StaticResource Vermilion}" Visibility="Hidden" Margin="0,0,0,-1" />
+            </Grid>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsSelected" Value="True">
-                <Setter TargetName="tab" Property="Background" Value="#E3E8FF" />
-                <Setter Property="Foreground" Value="#4055C6" />
-              </Trigger>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="tab" Property="Opacity" Value="0.8" />
+                <Setter Property="Foreground" Value="{StaticResource Muted}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="line" Property="Visibility" Value="Visible" />
+                <Setter Property="Foreground" Value="{StaticResource Paper}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- Rename fold -->
+    <Style TargetType="Expander">
+      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Expander">
+            <StackPanel>
+              <ToggleButton x:Name="toggle" Cursor="Hand" Focusable="False" HorizontalAlignment="Left" Foreground="{TemplateBinding Foreground}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                      <Path x:Name="chev" Data="M0,0 L3.5,3.5 L0,7" Stroke="#9C968C" StrokeThickness="1.3" VerticalAlignment="Center" Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform><RotateTransform Angle="0" /></Path.RenderTransform>
+                      </Path>
+                      <ContentPresenter VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="chev" Property="RenderTransform">
+                          <Setter.Value><RotateTransform Angle="90" /></Setter.Value>
+                        </Setter>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+                <ContentPresenter Content="{TemplateBinding Header}" />
+              </ToggleButton>
+              <ContentPresenter x:Name="body" Visibility="Collapsed" />
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsExpanded" Value="True">
+                <Setter TargetName="body" Property="Visibility" Value="Visible" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Mapping list -->
+    <Style TargetType="DataGrid">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource Paper}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="RowBackground" Value="Transparent" />
+      <Setter Property="AlternatingRowBackground" Value="Transparent" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
+    <Style TargetType="DataGridCell">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="DataGridCell">
+            <ContentPresenter VerticalAlignment="Center" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsSelected" Value="True">
+          <Setter Property="Background" Value="Transparent" />
+          <Setter Property="Foreground" Value="{StaticResource Paper}" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style TargetType="DataGridRow">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#CFC9BE" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="DataGridRow">
+            <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8" Margin="0,1">
+              <Grid>
+                <DataGridCellsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+                <Border x:Name="bar" Width="3" HorizontalAlignment="Left" Margin="0,12" CornerRadius="1.5" Background="{StaticResource Vermilion}" Visibility="Hidden" />
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bg" Property="Background" Value="#1B1C21" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="bg" Property="Background" Value="#22242A" />
+                <Setter TargetName="bar" Property="Visibility" Value="Visible" />
+                <Setter Property="Foreground" Value="{StaticResource Paper}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Small pieces -->
+    <Style x:Key="Overline" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource Faint}" />
+    </Style>
+    <Style x:Key="Kbd" TargetType="Border">
+      <Setter Property="Background" Value="#1A1B1F" />
+      <Setter Property="BorderBrush" Value="#2E3036" />
+      <Setter Property="BorderThickness" Value="1,1,1,2" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="6,1" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
   </Window.Resources>
-  <Grid Margin="16,10,16,12">
+
+  <Grid x:Name="RootGrid" Background="{StaticResource Ink}">
     <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="10" />
+      <RowDefinition Height="56" />
       <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
+      <RowDefinition Height="34" />
     </Grid.RowDefinitions>
-    <Grid>
+
+    <!-- ═══ Title bar ═══ -->
+    <Grid Grid.Row="0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-        <StackPanel Orientation="Horizontal">
-          <Border Background="#5365E9" Width="34" Height="34" CornerRadius="10" Margin="0,0,11,0">
-            <Viewbox Margin="3">
-              <Canvas Width="256" Height="256">
-                <Path Fill="White" Data="M62,80 C40,80 35,130 28,164 C20,202 50,208 88,166 L164,166 C202,208 236,195 221,161 C210,110 210,80 186,80 Z" />
-                <Path Fill="#5365E9" Data="M64,110 H78 V124 H92 V138 H78 V152 H64 V138 H50 V124 H64 Z" />
-                <Ellipse Canvas.Left="167" Canvas.Top="103" Width="18" Height="18" Fill="#5365E9" />
-                <Ellipse Canvas.Left="185" Canvas.Top="123" Width="18" Height="18" Fill="#5365E9" />
-                <Path Fill="#16243D" Stroke="#5365E9" StrokeThickness="5" Data="M122,122 V218 L143,197 L158,226 L179,215 L163,188 L193,184 Z" />
-              </Canvas>
-            </Viewbox>
-          </Border>
-          <TextBlock Text="PadDesk" FontSize="21" FontWeight="Bold" VerticalAlignment="Center" />
-        </StackPanel>
-        <TextBlock x:Name="DeviceText" Text="正在连接手柄…" Foreground="#7B879B" Margin="16,0,12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="340" FontSize="11" />
-      </StackPanel>
-      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-        <Border x:Name="StateBadge" Background="#DDF4EB" CornerRadius="15" Padding="12,6" Margin="0,0,13,0">
-          <TextBlock x:Name="StateText" Text="等待输入" Foreground="#178268" />
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="22,0,0,0">
+        <!-- Seal -->
+        <Border Width="28" Height="28" CornerRadius="6" Background="{StaticResource Vermilion}">
+          <TextBlock Text="柄" FontFamily="STKaiti, KaiTi" FontSize="19" Foreground="#FFF6EC" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
         </Border>
-        <Button x:Name="PauseButton" Content="暂停控制" Margin="0,0,9,0" />
-        <Button x:Name="TrayButton" Content="收起到托盘" />
+        <TextBlock Text="PadDesk" FontFamily="{StaticResource Display}" FontSize="19" Foreground="{StaticResource Paper}" VerticalAlignment="Center" Margin="12,0,0,1" />
+        <Border Width="1" Height="16" Background="{StaticResource HairlineStrong}" Margin="16,0" VerticalAlignment="Center" />
+        <TextBlock x:Name="DeviceText" Text="正在连接手柄…" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="460" />
+      </StackPanel>
+
+      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+        <Border x:Name="StateBadge" CornerRadius="14" Padding="12,0" Height="28" Background="{StaticResource CeladonWash}" Margin="0,0,10,0" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Ellipse x:Name="StateDot" Width="7" Height="7" Fill="{StaticResource Celadon}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBlock x:Name="StateText" Text="等待输入" Foreground="{StaticResource Celadon}" FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
+        </Border>
+        <Button x:Name="PauseButton" Content="暂停控制" MinHeight="30" Height="30" Padding="14,0" FontSize="12" shell:WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Ctrl + Alt + F12" />
+      </StackPanel>
+
+      <StackPanel Grid.Column="3" Orientation="Horizontal">
+        <Button x:Name="MinButton" Style="{StaticResource Caption}" Content="&#xE921;" ToolTip="最小化" />
+        <Button x:Name="MaxButton" Style="{StaticResource Caption}" Content="&#xE922;" ToolTip="最大化" />
+        <Button x:Name="CloseButton" Style="{StaticResource CaptionClose}" Content="&#xE8BB;" ToolTip="收起到托盘" />
       </StackPanel>
     </Grid>
-    <Grid Grid.Row="2">
+
+    <!-- ═══ Body ═══ -->
+    <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="1.65*" MinWidth="420" />
-        <ColumnDefinition Width="12" />
-        <ColumnDefinition Width="*" MinWidth="370" MaxWidth="520" />
+        <ColumnDefinition Width="*" MinWidth="560" />
+        <ColumnDefinition Width="408" />
       </Grid.ColumnDefinitions>
-      <Border Background="#101C30" CornerRadius="14" Padding="14">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition />
-            <RowDefinition Height="Auto" />
-          </Grid.RowDefinitions>
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="手柄空间" Foreground="White" FontSize="18" FontWeight="SemiBold" />
-              <TextBlock x:Name="LiveHint" Text="等待手柄" Foreground="#91A8BD" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11" />
+
+      <!-- Stage -->
+      <Grid>
+        <Border x:Name="ControllerHost" ClipToBounds="True" />
+
+        <ListBox x:Name="ModelCombo" Style="{StaticResource Segmented}" SelectedIndex="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,78,0" Width="176" FontSize="12">
+          <ListBoxItem Content="Xbox" />
+          <ListBoxItem Content="Switch Pro" />
+        </ListBox>
+
+        <!-- Bottom deck: live input and stage actions -->
+        <Grid VerticalAlignment="Bottom" Margin="28,0,24,22">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel VerticalAlignment="Bottom">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+              <Ellipse x:Name="LiveDot" Width="6" Height="6" Fill="#3A3C42" VerticalAlignment="Center" Margin="0,0,7,0" />
+              <TextBlock x:Name="LiveHint" Text="实时输入" Style="{StaticResource Overline}" />
             </StackPanel>
-            <ComboBox x:Name="ModelCombo" Grid.Column="1" Width="190" SelectedIndex="0">
-              <ComboBoxItem Content="Xbox 标准布局" />
-              <ComboBoxItem Content="Switch Pro · ABXY" />
-            </ComboBox>
-          </Grid>
-          <Border x:Name="ControllerHost" Grid.Row="1" Margin="0,8" ClipToBounds="True" />
-          <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock x:Name="RawText" Text="连接手柄后查看实时输入" Foreground="#B8C8DA" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="11" />
-            <StackPanel x:Name="StageActions" Grid.Column="1" Orientation="Horizontal">
-              <Button x:Name="WizardButton" Content="全按键校准" Background="#5365E9" Foreground="White" BorderBrush="#5365E9" VerticalAlignment="Center" Margin="0,0,10,0" Padding="14,7" />
-              <Button x:Name="LocateButton" Content="按键定位" HorizontalAlignment="Right" Padding="14,7" Margin="0,0,10,0" />
-            </StackPanel>
-          </Grid>
+            <Grid MinHeight="30">
+              <TextBlock x:Name="RawText" Text="连接手柄后查看实时输入" Foreground="{StaticResource Muted}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              <ItemsControl x:Name="LiveChips" VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="#1A2A27" BorderBrush="#2F4A44" BorderThickness="1" CornerRadius="7" Padding="10,4" Margin="0,0,6,4">
+                      <TextBlock Text="{Binding}" Foreground="#9FD6C6" FontSize="12.5" FontWeight="SemiBold" />
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
+          </StackPanel>
+          <StackPanel x:Name="StageActions" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+            <Button x:Name="LocateButton" Content="按键定位" Margin="0,0,10,0" Background="#AA111215" ToolTip="按下一个实体键，直接定位到它的映射" />
+            <Button x:Name="WizardButton" Content="全按键校准" Style="{StaticResource Primary}" Padding="20,0" ToolTip="逐个对准所有实体按键" />
+          </StackPanel>
         </Grid>
-      </Border>
-      <TabControl x:Name="InspectorTabs" Grid.Column="2" BorderThickness="0" Background="White" Padding="0,4,0,0">
-        <TabItem Header="按键映射" Padding="22,10">
-          <Border Background="White" CornerRadius="16" Padding="14">
+      </Grid>
+
+      <!-- Inspector -->
+      <Border Grid.Column="1" Background="{StaticResource Panel}" BorderBrush="{StaticResource Hairline}" BorderThickness="1,1,0,0" CornerRadius="14,0,0,0">
+        <TabControl x:Name="InspectorTabs">
+
+          <!-- Mapping -->
+          <TabItem Header="按键映射">
             <Grid>
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
               </Grid.RowDefinitions>
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
 
-                  <TextBlock x:Name="MapCountText" Text="选择按键，在 3D 视图中查看位置" Foreground="#8B96A8" Margin="0,5,0,0" FontSize="12" />
-                </StackPanel>
-              </Grid>
-              <Border Grid.Row="1" Background="#F1F4FF" CornerRadius="8" Padding="8,5" Margin="0,7,0,7">
-                <TextBlock x:Name="GuideText" Text="点选模型或列表中的按键，设置对应输出。" TextWrapping="Wrap" Foreground="#6776A6" FontSize="12" />
-              </Border>
-              <DataGrid x:Name="MappingGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="Column" GridLinesVisibility="None" BorderThickness="0" RowHeaderWidth="0" Background="White" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MinHeight="150" RowHeight="32" FontSize="13">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="实体键" Binding="{Binding Physical}" Width="*" />
-                  <DataGridTextColumn Header="对应输出" Binding="{Binding OutputLabel}" Width="*" />
-                </DataGrid.Columns>
-              </DataGrid>
-              <Border Grid.Row="2" Background="#F1F4FF" CornerRadius="10" Padding="12" Margin="0,0,0,12">
-                <StackPanel>
-                  <DockPanel LastChildFill="True">
-                    <TextBlock x:Name="SelectedText" Text="选择一个按键" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                  </DockPanel>
-                  <Grid Margin="0,13,0,0">
-                    <Grid.RowDefinitions>
-                      <RowDefinition />
-                      <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="112" />
-                      <ColumnDefinition Width="10" />
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="10" />
-                      <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ComboBox x:Name="TargetCombo" Grid.ColumnSpan="3">
-                      <ComboBoxItem Content="未分配" />
-                      <ComboBoxItem Content="鼠标左键" />
-                      <ComboBoxItem Content="鼠标右键" />
-                      <ComboBoxItem Content="键盘按键" />
-                    </ComboBox>
-                    <Button x:Name="KeyButton" Grid.Column="0" Content="选择键盘键 / 组合键" IsEnabled="False" Grid.Row="1" Grid.ColumnSpan="5" Margin="0,8,0,0" Visibility="Collapsed" />
-                    <Button x:Name="ApplyButton" Grid.Column="4" Content="应用" Background="#17243D" Foreground="White" BorderBrush="#17243D" Padding="12,7" />
-                  </Grid>
-                  <Expander Header="修改实体键名称" Margin="0,10,0,0" FontSize="12">
+              <!-- Selected key editor -->
+              <StackPanel Margin="24,22,24,0">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                  </Grid.ColumnDefinitions>
+                  <Border Width="60" Height="60" CornerRadius="12" Background="{StaticResource Raised}" BorderBrush="{StaticResource HairlineStrong}" BorderThickness="1">
+                    <Viewbox Margin="10" StretchDirection="DownOnly">
+                      <TextBlock x:Name="SelectedGlyph" Text="—" FontFamily="{StaticResource Display}" FontSize="26" Foreground="{StaticResource Paper}" />
+                    </Viewbox>
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="SelectedText" Text="选择一个按键" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource Paper}" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                      <TextBlock x:Name="SelectedRaw" Text="点选模型、列表，或直接按下实体键" FontSize="11.5" Foreground="{StaticResource Faint}" />
+                      <TextBlock x:Name="LockHint" Text="" Foreground="{StaticResource Amber}" FontSize="11" Margin="10,0,0,0" />
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+
+                <TextBlock Text="输出" Style="{StaticResource Overline}" Margin="0,20,0,8" />
+                <ListBox x:Name="TargetCombo" Style="{StaticResource Segmented}" SelectedIndex="0" FontSize="12.5">
+                  <ListBoxItem Content="未分配" />
+                  <ListBoxItem Content="鼠标左键" />
+                  <ListBoxItem Content="鼠标右键" />
+                  <ListBoxItem Content="键盘" />
+                </ListBox>
+                <Button x:Name="KeyButton" Content="录入键盘键 / 组合键" IsEnabled="False" Visibility="Collapsed" Margin="0,10,0,0" HorizontalContentAlignment="Left" Background="{StaticResource Well}" />
+
+                <Grid Margin="0,14,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Expander Header="重命名实体键" FontSize="12" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                      <TextBox x:Name="PhysicalNameBox" Width="135" ToolTip="自定义实体按键名称" />
-                      <Button x:Name="RenameButton" Content="确认名称" Padding="10,7" Margin="10,0,0,0" />
+                      <TextBox x:Name="PhysicalNameBox" Width="150" ToolTip="自定义实体按键名称" />
+                      <Button x:Name="RenameButton" Content="确认" Margin="8,0,0,0" Padding="14,0" />
                     </StackPanel>
                   </Expander>
-                  <TextBlock x:Name="LockHint" Text="" Foreground="#8B96A8" VerticalAlignment="Center" Margin="0,3,0,0" />
-                </StackPanel>
-              </Border>
+                  <Button x:Name="ApplyButton" Grid.Column="1" Content="应用" Style="{StaticResource Primary}" Padding="26,0" VerticalAlignment="Top" />
+                </Grid>
+
+                <TextBlock x:Name="GuideText" Text="点选模型或列表中的按键，设置对应输出。" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,0" LineHeight="19" />
+              </StackPanel>
+
+              <!-- List header -->
+              <Grid Grid.Row="1" Margin="24,20,24,8">
+                <TextBlock Text="全部输入" Style="{StaticResource Overline}" />
+                <TextBlock x:Name="MapCountText" Text="" Style="{StaticResource Overline}" HorizontalAlignment="Right" />
+              </Grid>
+
+              <DataGrid x:Name="MappingGrid" Grid.Row="2" Margin="12,0,8,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="None" GridLinesVisibility="None" RowHeaderWidth="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MinHeight="150" RowHeight="50">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Grid Margin="16,0,8,0">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition />
+                          </Grid.ColumnDefinitions>
+                          <Ellipse x:Name="dot" Width="6" Height="6" Fill="#34363D" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Physical}" FontSize="13.5" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Raw}" FontSize="11" Foreground="#66625C" Margin="0,2,0,0" />
+                          </StackPanel>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                          <DataTrigger Binding="{Binding Verification}" Value="已对准">
+                            <Setter TargetName="dot" Property="Fill" Value="#7A756D" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding Verification}" Value="固定">
+                            <Setter TargetName="dot" Property="Fill" Value="#D9A55A" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding Active}" Value="True">
+                            <Setter TargetName="dot" Property="Fill" Value="#86C5B3" />
+                          </DataTrigger>
+                        </DataTemplate.Triggers>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Border x:Name="pill" HorizontalAlignment="Right" Margin="0,0,14,0" CornerRadius="6" Padding="9,4" Background="#24262C">
+                          <TextBlock x:Name="label" Text="{Binding OutputLabel}" FontSize="12" Foreground="#DCD6CB" />
+                        </Border>
+                        <DataTemplate.Triggers>
+                          <DataTrigger Binding="{Binding OutputLabel}" Value="未分配">
+                            <Setter TargetName="pill" Property="Background" Value="Transparent" />
+                            <Setter TargetName="label" Property="Foreground" Value="#55524D" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding Active}" Value="True">
+                            <Setter TargetName="pill" Property="Background" Value="#1A2A27" />
+                            <Setter TargetName="label" Property="Foreground" Value="#9FD6C6" />
+                          </DataTrigger>
+                        </DataTemplate.Triggers>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
             </Grid>
-          </Border>
-        </TabItem>
-        <TabItem Header="移动设置" Padding="22,10">
-          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
-              <Border Background="White" CornerRadius="14" Padding="16" Margin="0">
-                <StackPanel>
-                  <DockPanel>
-                    <TextBlock Text="左摇杆 · 平滑移动" FontSize="15" FontWeight="SemiBold" />
-                    <CheckBox x:Name="StickEnabled" IsChecked="True" Content="启用" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                  </DockPanel>
-                  <TextBlock Text="轻推微调，推远加速 · 两轴等速" Foreground="#8B96A8" Margin="0,6,0,16" FontSize="12" />
-                  <DockPanel>
-                    <TextBlock Text="最高速度" />
-                    <TextBlock x:Name="SpeedText" Text="800 px/s" HorizontalAlignment="Right" FontWeight="SemiBold" />
-                  </DockPanel>
-                  <Slider x:Name="SpeedSlider" Minimum="100" Maximum="2400" TickFrequency="50" IsSnapToTickEnabled="True" Value="800" Margin="0,8,0,15" />
-                  <DockPanel>
-                    <TextBlock Text="回中死区" />
-                    <TextBlock x:Name="DeadzoneText" Text="16%" HorizontalAlignment="Right" FontWeight="SemiBold" />
-                  </DockPanel>
-                  <Slider x:Name="DeadzoneSlider" Minimum="5" Maximum="45" TickFrequency="1" IsSnapToTickEnabled="True" Value="16" Margin="0,8,0,14" />
-                  <DockPanel>
-                    <TextBlock Text="操控曲线" />
-                    <ComboBox x:Name="CurveCombo" Width="130" HorizontalAlignment="Right">
-                      <ComboBoxItem Content="线性 · 均匀" />
-                      <ComboBoxItem Content="渐进 · 精细" IsSelected="True" />
-                      <ComboBoxItem Content="柔和 · 微调" />
-                    </ComboBox>
-                  </DockPanel>
-                  <Button x:Name="StickCalibrateButton" Content="校准左摇杆方向与中心" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Background="#F2F5FA" CornerRadius="12" Padding="16" Margin="0,16,0,0">
-                <StackPanel>
-                  <TextBlock Text="方向键 · 步进移动" FontWeight="SemiBold" FontSize="15" />
-                  <TextBlock Text="每次按下移动的物理像素" Foreground="#7B879B" Margin="0,6,0,16" />
-                  <Grid>
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition />
-                      <ColumnDefinition Width="16" />
-                      <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                      <TextBlock Text="水平 / px" Margin="0,0,0,7" />
-                      <TextBox x:Name="HorizontalStepBox" Text="30" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                      <TextBlock Text="垂直 / px" Margin="0,0,0,7" />
-                      <TextBox x:Name="VerticalStepBox" Text="20" />
-                    </StackPanel>
-                  </Grid>
-                  <TextBlock x:Name="DpadError" Foreground="#BD4343" TextWrapping="Wrap" Margin="0,8,0,0" />
-                  <Button x:Name="DpadApplyButton" Content="应用步长" HorizontalAlignment="Right" Margin="0,8,0,12" />
-                  <TextBlock x:Name="DpadText" Foreground="#64738D" TextWrapping="Wrap" FontSize="12" />
-                </StackPanel>
-              </Border>
-            </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-      </TabControl>
-      <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" ToolTip="拖动调整模型与设置区宽度" />
+          </TabItem>
+
+          <!-- Movement -->
+          <TabItem Header="移动设置">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <StackPanel Margin="24,22,24,24">
+
+                <!-- Left stick -->
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="左摇杆" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Text="连续移动 · 轻推微调，推远加速" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0" />
+                  </StackPanel>
+                  <CheckBox x:Name="StickEnabled" Style="{StaticResource Switch}" IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0" ToolTip="启用左摇杆移动鼠标" />
+                </Grid>
+
+                <Grid Margin="0,24,0,0">
+                  <TextBlock Text="最高速度" Foreground="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock x:Name="SpeedText" Text="800" FontFamily="{StaticResource Display}" FontSize="24" Foreground="{StaticResource Paper}" />
+                    <TextBlock Text="px/s" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Bottom" Margin="6,0,0,5" />
+                  </StackPanel>
+                </Grid>
+                <Slider x:Name="SpeedSlider" Minimum="100" Maximum="2400" TickFrequency="50" IsSnapToTickEnabled="True" Value="800" Margin="0,6,0,0" />
+
+                <Grid Margin="0,20,0,0">
+                  <TextBlock Text="回中死区" Foreground="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock x:Name="DeadzoneText" Text="16" FontFamily="{StaticResource Display}" FontSize="24" Foreground="{StaticResource Paper}" />
+                    <TextBlock Text="%" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Bottom" Margin="5,0,0,5" />
+                  </StackPanel>
+                </Grid>
+                <Slider x:Name="DeadzoneSlider" Minimum="5" Maximum="45" TickFrequency="1" IsSnapToTickEnabled="True" Value="16" Margin="0,6,0,0" />
+
+                <TextBlock Text="操控曲线" Foreground="{StaticResource Muted}" Margin="0,22,0,10" />
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="96" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition />
+                  </Grid.ColumnDefinitions>
+                  <!-- Response curve preview -->
+                  <Border Height="96" CornerRadius="10" Background="{StaticResource Well}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" ClipToBounds="True">
+                    <Grid Margin="12">
+                      <Path Data="M0,72 L72,0" Stroke="#2A2C32" StrokeThickness="1" StrokeDashArray="3 3" Stretch="None" />
+                      <Path x:Name="CurvePath" Stroke="{StaticResource Vermilion}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None" />
+                    </Grid>
+                  </Border>
+                  <ListBox x:Name="CurveCombo" Grid.Column="2" SelectedIndex="1" VerticalAlignment="Center" FontSize="12.5" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                    <ListBox.Template>
+                      <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                      </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.ItemContainerStyle>
+                      <Style TargetType="ListBoxItem">
+                        <Setter Property="Foreground" Value="#9C968C" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Setter Property="Template">
+                          <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                              <Border x:Name="b" CornerRadius="7" Padding="12,0" Height="30" Margin="0,0,0,2" Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                                <ContentPresenter VerticalAlignment="Center" />
+                              </Border>
+                              <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter Property="Foreground" Value="#D8D2C7" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                  <Setter TargetName="b" Property="Background" Value="#22242A" />
+                                  <Setter TargetName="b" Property="BorderBrush" Value="#34363D" />
+                                  <Setter Property="Foreground" Value="#F3EEE5" />
+                                </Trigger>
+                              </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                          </Setter.Value>
+                        </Setter>
+                      </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBoxItem Content="线性 · 均匀" />
+                    <ListBoxItem Content="渐进 · 精细" />
+                    <ListBoxItem Content="柔和 · 微调" />
+                  </ListBox>
+                </Grid>
+
+                <Button x:Name="StickCalibrateButton" Content="校准左摇杆方向与中心" Margin="0,20,0,0" />
+
+                <Border Height="1" Background="{StaticResource Hairline}" Margin="0,28" />
+
+                <!-- D-pad -->
+                <TextBlock Text="方向键" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="步进移动 · 每按一次移动的物理像素" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,0,18" />
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="水平  ←  →" Style="{StaticResource Overline}" Margin="0,0,0,7" />
+                    <Grid>
+                      <TextBox x:Name="HorizontalStepBox" Text="30" FontFamily="{StaticResource Mono}" FontSize="14" Padding="12,0,36,0" />
+                      <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" IsHitTestVisible="False" />
+                    </Grid>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="垂直  ↑  ↓" Style="{StaticResource Overline}" Margin="0,0,0,7" />
+                    <Grid>
+                      <TextBox x:Name="VerticalStepBox" Text="20" FontFamily="{StaticResource Mono}" FontSize="14" Padding="12,0,36,0" />
+                      <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" IsHitTestVisible="False" />
+                    </Grid>
+                  </StackPanel>
+                </Grid>
+                <TextBlock x:Name="DpadError" Foreground="#E5664A" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0" />
+                <Grid Margin="0,8,0,0">
+                  <TextBlock x:Name="DpadText" Foreground="{StaticResource Faint}" TextWrapping="Wrap" FontSize="11.5" LineHeight="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <Button x:Name="DpadApplyButton" Content="应用步长" HorizontalAlignment="Right" />
+                </Grid>
+              </StackPanel>
+            </ScrollViewer>
+          </TabItem>
+        </TabControl>
+      </Border>
     </Grid>
-    <DockPanel Grid.Row="3" Margin="2,17,2,0">
-      <TextBlock x:Name="FooterText" Text="配置保存在本机 · Ctrl+Alt+F12 暂停 / 恢复" Foreground="#8A96AA" FontSize="12" />
-      <TextBlock Text="按下与弹起同步 · 拖拽可用" Foreground="#8A96AA" FontSize="12" HorizontalAlignment="Right" />
-    </DockPanel>
+
+    <!-- ═══ Status line ═══ -->
+    <Grid Grid.Row="2" Margin="22,0,22,0">
+      <TextBlock x:Name="FooterText" Text="配置保存在本机" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,320,0" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <TextBlock Text="按下与弹起同步" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" />
+        <Border Width="1" Height="10" Background="{StaticResource HairlineStrong}" Margin="12,0" />
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="Ctrl" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="Alt" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="F12" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
+        <TextBlock Text="暂停 / 恢复" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" Margin="4,0,0,0" />
+      </StackPanel>
+    </Grid>
   </Grid>
 </Window>

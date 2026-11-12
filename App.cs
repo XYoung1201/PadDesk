@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Markup;
@@ -51,26 +52,30 @@ namespace PadDesk {
             var menu=new Forms.ContextMenuStrip();menu.Items.Add("打开控制台",null,delegate{Show();});trayPause=new Forms.ToolStripMenuItem("暂停控制",null,delegate{Toggle();});menu.Items.Add(trayPause);menu.Items.Add("退出",null,delegate{Quit();});
             tray=new Forms.NotifyIcon {Icon=appIcon,Text="PadDesk · 手柄控制台",ContextMenuStrip=menu,Visible=true};tray.DoubleClick+=delegate{Show();};
             Get<Button>("DpadApplyButton").Click+=delegate{ApplyDpad();};
-            Get<ComboBox>("ModelCombo").SelectionChanged+=delegate{if(loading)return;string layout=Get<ComboBox>("ModelCombo").SelectedIndex==1?"Photo":"Xbox";controllerView.SetLayout(layout);if(profile!=null){profile.VisualLayout=layout;Save();}};
-            Get<Button>("PauseButton").Click+=delegate{Toggle();};Get<Button>("TrayButton").Click+=delegate{window.Hide();};
+            Get<Selector>("ModelCombo").SelectionChanged+=delegate{if(loading)return;string layout=Get<Selector>("ModelCombo").SelectedIndex==1?"Photo":"Xbox";controllerView.SetLayout(layout);if(profile!=null){profile.VisualLayout=layout;Save();}};
+            Get<Button>("PauseButton").Click+=delegate{Toggle();};
+            Get<Button>("MinButton").Click+=delegate{window.WindowState=WindowState.Minimized;};
+            Get<Button>("MaxButton").Click+=delegate{window.WindowState=window.WindowState==WindowState.Maximized?WindowState.Normal:WindowState.Maximized;};
+            Get<Button>("CloseButton").Click+=delegate{window.Close();};
+            window.StateChanged+=delegate{bool max=window.WindowState==WindowState.Maximized;var edge=SystemParameters.WindowResizeBorderThickness;Get<Grid>("RootGrid").Margin=max?new Thickness(edge.Left+4,edge.Top+4,edge.Right+4,edge.Bottom+4):new Thickness(0);Get<Button>("MaxButton").Content=max?"\uE923":"\uE922";Get<Button>("MaxButton").ToolTip=max?"还原":"最大化";};
             Get<Button>("WizardButton").Click+=delegate{OpenCalibration(false);};Get<Button>("LocateButton").Click+=delegate{OpenCalibration(true);};
             Get<Button>("StickCalibrateButton").Click+=delegate{OpenStickCalibration();};
             Get<DataGrid>("MappingGrid").SelectionChanged+=delegate{Selection();};
-            Get<ComboBox>("TargetCombo").SelectionChanged+=delegate{if(!loading){bool keyboard=Get<ComboBox>("TargetCombo").SelectedIndex==3;Get<Button>("KeyButton").IsEnabled=keyboard;Get<Button>("KeyButton").Visibility=keyboard?Visibility.Visible:Visibility.Collapsed;}};
+            Get<Selector>("TargetCombo").SelectionChanged+=delegate{if(!loading){bool keyboard=Get<Selector>("TargetCombo").SelectedIndex==3;Get<Button>("KeyButton").IsEnabled=keyboard;Get<Button>("KeyButton").Visibility=keyboard?Visibility.Visible:Visibility.Collapsed;}};
             Get<Button>("KeyButton").Click+=delegate{OpenKeyPicker();};
             Get<Button>("ApplyButton").Click+=delegate{ApplyMapping();};Get<Button>("RenameButton").Click+=delegate{Rename();};
-            Get<Slider>("SpeedSlider").ValueChanged+=delegate{TuneStick();};Get<Slider>("DeadzoneSlider").ValueChanged+=delegate{TuneStick();};Get<ComboBox>("CurveCombo").SelectionChanged+=delegate{TuneStick();};
+            Get<Slider>("SpeedSlider").ValueChanged+=delegate{TuneStick();};Get<Slider>("DeadzoneSlider").ValueChanged+=delegate{TuneStick();};Get<Selector>("CurveCombo").SelectionChanged+=delegate{TuneStick();};
             Get<CheckBox>("StickEnabled").Checked+=delegate{TuneStick();};Get<CheckBox>("StickEnabled").Unchecked+=delegate{TuneStick();};
             window.Closing+=delegate(object sender,System.ComponentModel.CancelEventArgs e){if(!quitting){e.Cancel=true;window.Hide();tray.ShowBalloonTip(2000,"PadDesk 正在后台运行","双击托盘图标打开；右键选择退出。",Forms.ToolTipIcon.Info);}};
             window.SourceInitialized+=delegate{
-                source=HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);source.AddHook(Hotkey);
+                source=HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);source.AddHook(Hotkey);Theme.Apply(window);
                 if(!RegisterHotKey(source.Handle,1,0x4003,0x7B))Footer("暂停快捷键已被其他程序占用，请用控制台或托盘菜单暂停。");
             };
             app.SessionEnding+=delegate{output.ReleaseAll();};
             SystemEvents.SessionSwitch+=SessionSwitch;
             saveTimer.Interval=TimeSpan.FromMilliseconds(650);saveTimer.Tick+=delegate{saveTimer.Stop();Save();};
             timer.Interval=TimeSpan.FromMilliseconds(16);timer.Tick+=Tick;timer.Start();
-            window.Show();
+            DrawCurve(.16,1.6);window.Show();
         }
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr h,int id,uint mods,uint vk);
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h,int id);
@@ -80,7 +85,11 @@ namespace PadDesk {
         void Footer(string text){Get<TextBlock>("FooterText").Text=text;}
         void Suspend(){output.ReleaseAll();engine=new InputEngine();}
         void Toggle(){paused=!paused;Suspend();UpdateState();}
-        void UpdateState(){string state=!current.Connected?"等待手柄":busy?"校准 / 编辑中":paused?"已暂停":"正在控制";Get<TextBlock>("StateText").Text=state;Get<Button>("PauseButton").Content=paused?"恢复控制":"暂停控制";trayPause.Text=paused?"恢复控制":"暂停控制";trayPause.Checked=paused;tray.Text="PadDesk · "+state;}
+        string shownState;
+        void UpdateState(){string state=!current.Connected?"等待手柄":busy?"校准 / 编辑中":paused?"已暂停":"正在控制";Get<TextBlock>("StateText").Text=state;
+            if(shownState!=state){shownState=state;string fg=state=="正在控制"?"#86C5B3":state=="已暂停"?"#E5664A":state=="等待手柄"?"#9C968C":"#D9A55A";string bg=state=="正在控制"?"#1A2A27":state=="已暂停"?"#2E1C17":state=="等待手柄"?"#1E2025":"#2B2418";
+                Get<TextBlock>("StateText").Foreground=Theme.Brush(fg);Get<Ellipse>("StateDot").Fill=Theme.Brush(fg);Get<Border>("StateBadge").Background=Theme.Brush(bg);}
+            Get<Button>("PauseButton").Content=paused?"恢复控制":"暂停控制";trayPause.Text=paused?"恢复控制":"暂停控制";trayPause.Checked=paused;tray.Text="PadDesk · "+state;}
         void Tick(object sender,EventArgs args) {
             try {
                 double now=clock.Elapsed.TotalSeconds;current=device.Read(now);
@@ -103,11 +112,11 @@ namespace PadDesk {
             if(profile==null){profile=device.CreateProfile(current);MigrateDpad();}
             Get<DataGrid>("MappingGrid").ItemsSource=profile.Mappings;
             Get<Slider>("SpeedSlider").Value=profile.Speed;Get<Slider>("DeadzoneSlider").Value=profile.Deadzone*100;
-            Get<ComboBox>("CurveCombo").SelectedIndex=profile.Curve<=1?0:profile.Curve>=2?2:1;Get<CheckBox>("StickEnabled").IsChecked=profile.StickEnabled;
+            Get<Selector>("CurveCombo").SelectedIndex=profile.Curve<=1?0:profile.Curve>=2?2:1;Get<CheckBox>("StickEnabled").IsChecked=profile.StickEnabled;
             Get<TextBox>("HorizontalStepBox").Text=profile.HorizontalStep.ToString();Get<TextBox>("VerticalStepBox").Text=profile.VerticalStep.ToString();
             Get<TextBlock>("DpadError").Text="";UpdateDpadLabel();
-            Get<ComboBox>("ModelCombo").SelectedIndex=profile.VisualLayout=="Photo"?1:0;controllerView.SetLayout(profile.VisualLayout);
-            Get<TextBlock>("DeviceText").Text=current.Name+"  ·  "+current.Buttons.Length+" 按钮 / "+current.Axes.Length+" 轴";
+            Get<Selector>("ModelCombo").SelectedIndex=profile.VisualLayout=="Photo"?1:0;controllerView.SetLayout(profile.VisualLayout);
+            Get<TextBlock>("DeviceText").Text=current.Name+"   ·   "+current.Buttons.Length+" 键  "+current.Axes.Length+" 轴";
             Get<DataGrid>("MappingGrid").SelectedIndex=0;loading=false;TuneLabels();Selection();controllerView.FocusControl(null);
         }
         [System.Runtime.Serialization.DataContract] class Legacy {
@@ -118,15 +127,21 @@ namespace PadDesk {
             string path=System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"..","GamepadMouse","settings.json"));
             if(File.Exists(path))using(var f=File.OpenRead(path)){var old=(Legacy)new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(Legacy)).ReadObject(f);if(old.HorizontalStep>0 && old.VerticalStep>0 && old.RepeatDelayMs>=100 && old.RepeatIntervalMs>=30){profile.HorizontalStep=old.HorizontalStep;profile.VerticalStep=old.VerticalStep;profile.RepeatDelayMs=old.RepeatDelayMs;profile.RepeatIntervalMs=old.RepeatIntervalMs;profile.RepeatEnabled=old.RepeatEnabled;}}
         }catch{}}
-        void Save(){if(profile==null)return;try{profile.Save();Footer("已保存到本机 · Ctrl+Alt+F12 暂停 / 恢复");}catch(Exception ex){paused=true;Suspend();Footer("保存失败，已暂停："+ex.Message);}}
-        void UpdateDpadLabel(){Get<TextBlock>("DpadText").Text="左右 "+profile.HorizontalStep+" px · 上下 "+profile.VerticalStep+" px"+(profile.RepeatEnabled?"\n长按 "+profile.RepeatDelayMs+" ms 后，每 "+profile.RepeatIntervalMs+" ms 一步":"\n长按重复已关闭");}
+        void Save(){if(profile==null)return;try{profile.Save();Footer("已保存到本机  ·  "+DateTime.Now.ToString("HH:mm:ss"));}catch(Exception ex){paused=true;Suspend();Footer("保存失败，已暂停："+ex.Message);}}
+        void UpdateDpadLabel(){Get<TextBlock>("DpadText").Text="当前 左右 "+profile.HorizontalStep+" · 上下 "+profile.VerticalStep+" px"+(profile.RepeatEnabled?"\n长按 "+profile.RepeatDelayMs+" ms 后每 "+profile.RepeatIntervalMs+" ms 一步":"\n长按重复已关闭");}
         void ApplyDpad(){
             if(profile==null || !current.Connected){Get<TextBlock>("DpadError").Text="请先连接手柄。";return;}
             if(!profile.SetDpadSteps(Get<TextBox>("HorizontalStepBox").Text,Get<TextBox>("VerticalStepBox").Text)){Get<TextBlock>("DpadError").Text="请输入 1–5000 之间的整数（px）。";return;}
             Suspend();Get<TextBlock>("DpadError").Text="";UpdateDpadLabel();Save();
         }
-        void TuneLabels(){if(profile==null)return;Get<TextBlock>("SpeedText").Text=((int)profile.Speed)+" px/s";Get<TextBlock>("DeadzoneText").Text=((int)(profile.Deadzone*100))+"%";}
-        void TuneStick(){if(loading || profile==null)return;profile.Speed=Get<Slider>("SpeedSlider").Value;profile.Deadzone=Get<Slider>("DeadzoneSlider").Value/100;profile.Curve=new[]{1.0,1.6,2.2}[Math.Max(0,Get<ComboBox>("CurveCombo").SelectedIndex)];profile.StickEnabled=Get<CheckBox>("StickEnabled").IsChecked==true;TuneLabels();saveTimer.Stop();saveTimer.Start();}
+        void TuneLabels(){if(profile==null)return;Get<TextBlock>("SpeedText").Text=((int)profile.Speed).ToString();Get<TextBlock>("DeadzoneText").Text=((int)Math.Round(profile.Deadzone*100)).ToString();DrawCurve(profile.Deadzone,profile.Curve);}
+        void DrawCurve(double dz,double exp){
+            // Response preview: dead zone flat, then the profile curve, in a 72 x 72 box.
+            var fig=new PathFigure {StartPoint=new Point(0,72)};var seg=new PolyLineSegment();
+            for(int i=1;i<=48;i++){double x=i/48.0,y=x<=dz?0:Math.Pow((x-dz)/(1-dz),exp);seg.Points.Add(new Point(x*72,72-y*72));}
+            fig.Segments.Add(seg);var geo=new PathGeometry();geo.Figures.Add(fig);geo.Freeze();Get<System.Windows.Shapes.Path>("CurvePath").Data=geo;
+        }
+        void TuneStick(){if(loading || profile==null)return;profile.Speed=Get<Slider>("SpeedSlider").Value;profile.Deadzone=Get<Slider>("DeadzoneSlider").Value/100;profile.Curve=new[]{1.0,1.6,2.2}[Math.Max(0,Get<Selector>("CurveCombo").SelectedIndex)];profile.StickEnabled=Get<CheckBox>("StickEnabled").IsChecked==true;TuneLabels();saveTimer.Stop();saveTimer.Start();}
         Mapping Selected {get{return Get<DataGrid>("MappingGrid").SelectedItem as Mapping;}}
         void SelectModelControl(string key){
             Get<TabControl>("InspectorTabs").SelectedIndex=0;
@@ -137,26 +152,38 @@ namespace PadDesk {
         }
         void Selection(){var m=Selected;bool wasLoading=loading;loading=true;
             controllerView.FocusControl(ControllerLayout.KeyFor(m));
-            Get<TextBlock>("SelectedText").Text=m==null?"选择一个按键":m.Physical+"  ·  "+m.Raw;
-            bool editable=m!=null && !m.Locked && !m.Reserved;Get<ComboBox>("TargetCombo").IsEnabled=editable;Get<Button>("ApplyButton").IsEnabled=editable;Get<Button>("RenameButton").IsEnabled=editable;Get<TextBox>("PhysicalNameBox").IsEnabled=editable;
-            Get<TextBlock>("LockHint").Text=m!=null && (m.Locked || m.Reserved)?"方向键输出锁定":"";
+            Get<TextBlock>("SelectedText").Text=m==null?"选择一个按键":m.Physical;
+            Get<TextBlock>("SelectedRaw").Text=m==null?"点选模型、列表，或直接按下实体键":m.Raw+"  ·  "+m.Verification;
+            Get<TextBlock>("SelectedGlyph").Text=Glyph(m);
+            bool editable=m!=null && !m.Locked && !m.Reserved;Get<Selector>("TargetCombo").IsEnabled=editable;Get<Button>("ApplyButton").IsEnabled=editable;Get<Button>("RenameButton").IsEnabled=editable;Get<TextBox>("PhysicalNameBox").IsEnabled=editable;
+            Get<TextBlock>("LockHint").Text=m!=null && (m.Locked || m.Reserved)?"固定输出":"";
             Get<TextBox>("PhysicalNameBox").Text=m==null?"":m.Name;
-            Get<ComboBox>("TargetCombo").SelectedIndex=m==null?0:m.Target=="MouseLeft"?1:m.Target=="MouseRight"?2:m.Target=="Keyboard"?3:0;
-            selectedKeys=m==null?new int[0]:(int[])m.Keys.Clone();Get<Button>("KeyButton").Content=selectedKeys.Length==0?"选择键盘键 / 组合键":KeyNames.Chord(selectedKeys);Get<Button>("KeyButton").IsEnabled=editable && m.Target=="Keyboard";Get<Button>("KeyButton").Visibility=editable && m.Target=="Keyboard"?Visibility.Visible:Visibility.Collapsed;loading=wasLoading;
+            Get<Selector>("TargetCombo").SelectedIndex=m==null?0:m.Target=="MouseLeft"?1:m.Target=="MouseRight"?2:m.Target=="Keyboard"?3:0;
+            selectedKeys=m==null?new int[0]:(int[])m.Keys.Clone();Get<Button>("KeyButton").Content=selectedKeys.Length==0?"录入键盘键 / 组合键":KeyNames.Chord(selectedKeys);Get<Button>("KeyButton").IsEnabled=editable && m.Target=="Keyboard";Get<Button>("KeyButton").Visibility=editable && m.Target=="Keyboard"?Visibility.Visible:Visibility.Collapsed;loading=wasLoading;
         }
-        void ApplyMapping(){var m=Selected;if(m==null || m.Locked || m.Reserved)return;int index=Get<ComboBox>("TargetCombo").SelectedIndex;
+        static string Glyph(Mapping m){
+            if(m==null)return "—";string key=ControllerLayout.KeyFor(m);
+            switch(key){case "UP":return "↑";case "DOWN":return "↓";case "LEFT":return "←";case "RIGHT":return "→";case "View":return "⧉";case "Menu":return "≡";case "Home":return "⌂";case "Share":return "◎";case null:break;default:return key;}
+            if(m.Input.Kind=="Dpad")return new[]{"↑","↓","←","→"}[Math.Max(0,Math.Min(3,m.Input.Index))];
+            string name=m.Physical;return name.Length<=3?name:"·";
+        }
+        void ApplyMapping(){var m=Selected;if(m==null || m.Locked || m.Reserved)return;int index=Get<Selector>("TargetCombo").SelectedIndex;
             if(index==3 && selectedKeys.Length==0){OpenKeyPicker();if(selectedKeys.Length==0)return;}
             Suspend();m.Target=new[]{"None","MouseLeft","MouseRight","Keyboard"}[Math.Max(0,index)];m.Keys=index==3?(int[])selectedKeys.Clone():new int[0];m.Notify();Save();Get<TextBlock>("GuideText").Text=m.Physical+" → "+m.OutputLabel+"。按住保持按下，松开立即弹起。";
         }
         void Rename(){var m=Selected;if(m==null || m.Locked || m.Reserved)return;string name=Get<TextBox>("PhysicalNameBox").Text.Trim();if(name.Length==0){Footer("请输入实体按键名称，例如 A、L1 或自定义名称。");return;}if(profile.Mappings.Any(r=>r!=m && r.Name==name && r.Confirmed)){Footer("此名称已被另一个按键使用，请使用全按键校准重新对准。");return;}m.Name=name;m.Confirmed=true;m.Notify();Save();Selection();}
+        string liveShown;
         void UpdateLive(){
-            controllerView.FollowInput=!busy && !(Keyboard.FocusedElement is TextBox) && !Get<ComboBox>("TargetCombo").IsDropDownOpen;
+            controllerView.FollowInput=!busy && !(Keyboard.FocusedElement is TextBox);
             controllerView.UpdateInput(current,profile);
             if(profile==null)return;
             string[] names=profile.Mappings.Where(m=>m.Active).Select(m=>(m.Confirmed?m.Physical:m.Raw)).ToArray();
-            Get<TextBlock>("RawText").Text=names.Length==0?"松开 · 等待输入":string.Join("  /  ",names);
-            Get<TextBlock>("LiveHint").Text=names.Length==0?"LIVE":"● 输入中";
-            Get<TextBlock>("MapCountText").Text=profile.Mappings.Count+" 个输入  ·  "+profile.Mappings.Count(m=>m.Confirmed && !m.Locked)+" 个已对准";
+            string joined=string.Join("\n",names);
+            if(joined!=liveShown){liveShown=joined;Get<ItemsControl>("LiveChips").ItemsSource=names;
+                Get<TextBlock>("RawText").Text=names.Length==0?"松开 · 等待输入":"";
+                Get<TextBlock>("LiveHint").Text=names.Length==0?"实时输入":"输入中";
+                Get<Ellipse>("LiveDot").Fill=Theme.Brush(names.Length==0?"#3A3C42":"#86C5B3");}
+            Get<TextBlock>("MapCountText").Text=profile.Mappings.Count(m=>m.Confirmed && !m.Locked)+" / "+profile.Mappings.Count+" 已对准";
         }
         void OpenKeyPicker(){if(Selected==null || Selected.Locked || Selected.Reserved)return;busy=true;Suspend();var dialog=new KeyDialog(window,selectedKeys);try{if(dialog.ShowDialog()==true){selectedKeys=dialog.Keys;Get<Button>("KeyButton").Content=KeyNames.Chord(selectedKeys);}}finally{busy=false;Suspend();}}
         void RecordNeutral(Snapshot neutral){

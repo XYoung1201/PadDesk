@@ -89,7 +89,7 @@ class VisualTests {
             ((TextBlock)owner.FindName("DeviceText")).Text="Xbox 标准布局 · 界面预览";
             ((TextBlock)owner.FindName("StateText")).Text="预览";
             owner.Show();Pump(650);Capture(owner,Path.Combine(folder,"overview.png"));Capture(controller,Path.Combine(folder,"model.png"));
-            controller.SetLayout("Photo");((ComboBox)owner.FindName("ModelCombo")).SelectedIndex=1;Pump(650);Capture(owner,Path.Combine(folder,"photo-overview.png"));
+            controller.SetLayout("Photo");((System.Windows.Controls.Primitives.Selector)owner.FindName("ModelCombo")).SelectedIndex=1;Pump(650);Capture(owner,Path.Combine(folder,"photo-overview.png"));
             owner.Width=1080;owner.Height=740;Pump(200);Capture(owner,Path.Combine(folder,"minimum.png"));
             Check(((DataGrid)owner.FindName("MappingGrid")).ActualHeight>=230,"mapping list has ample height at minimum window size");
             var renamePanel=Children<Expander>(owner).Single();renamePanel.IsExpanded=true;((Button)owner.FindName("KeyButton")).Visibility=Visibility.Visible;Pump(150);
