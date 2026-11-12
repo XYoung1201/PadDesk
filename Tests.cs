@@ -7,6 +7,19 @@ class Tests {
     static Snapshot S(bool b0=false,bool b1=false,short x=0,short y=0) {return new Snapshot {Connected=true,DeviceId="test",Buttons=new[]{b0,b1,false,false},Axes=new[]{x,y},Hats=new byte[0]};}
     static Profile P() {return new Profile {DeviceId="test",Speed=1000,Curve=1,Deadzone=.1,NeutralConfirmed=true,Mappings={new Mapping {Input=new Source {Index=0},Target="MouseLeft"}}};}
     static void Main() {
+        var steps=P();
+        Check(!steps.SetDpadSteps("0","20") && steps.HorizontalStep==30,"invalid zero step preserves existing settings");
+        Check(!steps.SetDpadSteps("45","5001") && steps.HorizontalStep==30 && steps.VerticalStep==20,"invalid second axis cannot partially change first axis");
+        Check(!steps.SetDpadSteps("1.5","20") && !steps.SetDpadSteps("","20"),"step editor rejects decimals and empty values");
+        Check(steps.SetDpadSteps("1","5000") && steps.HorizontalStep==1 && steps.VerticalStep==5000,"step editor accepts inclusive bounds");
+        steps.Mappings.Add(new Mapping {Input=new Source {Kind="Dpad",Index=3},Target="Right",Locked=true});var stepEngine=new InputEngine();var stepSnapshot=S();stepEngine.Tick(stepSnapshot,0,steps,true);stepSnapshot.Dpad[3]=true;
+        Check(stepEngine.Tick(stepSnapshot,.016,steps,true).Dx==1,"edited horizontal step reaches input engine");
+        steps.VisualLayout="Photo";
+        using(var stream=new System.IO.MemoryStream()){
+            var serializer=new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(Profile));serializer.WriteObject(stream,steps);stream.Position=0;
+            var restored=(Profile)serializer.ReadObject(stream);restored.Validate();
+            Check(restored.VisualLayout=="Photo" && restored.HorizontalStep==1 && restored.VerticalStep==5000,"layout and edited steps survive profile serialization");
+        }
         var p=P();var e=new InputEngine();e.Tick(S(),0,p,true);
         var r=e.Tick(S(true),.016,p,true);Check(r.Events.Count==1 && r.Events[0].Token=="M:L" && r.Events[0].Down,"press sends mouse down");
         Check(e.Tick(S(true),.032,p,true).Events.Count==0,"hold does not click or release");
@@ -44,6 +57,12 @@ class Tests {
         p=P();p.NeutralConfirmed=false;p.Mappings.Clear();e=new InputEngine();e.Tick(S(x:20000),0,p,true);Check(e.Tick(S(x:32767),.05,p,true).Dx==0,"stick waits for explicit neutral calibration");
         p=P();p.Mappings.Add(new Mapping {Input=new Source {Kind="Axis",Index=0,Direction=-1,Rest=20000},Target="None"});e=new InputEngine();e.Tick(S(),0,p,true);Check(e.Tick(S(true),.016,p,true).Events.Any(t=>t.Down),"unassigned axis cannot prevent button arming");
         var canonical=new Source {Kind="Dpad",Index=2};var ds=S();ds.Dpad[2]=true;Check(canonical.Active(ds),"canonical D-pad directions stay distinct");
+        var visual=new Mapping {Name="A",Confirmed=false};Check(ControllerLayout.KeyFor(visual)==null,"unconfirmed hint cannot light a physical face button");
+        visual.Confirmed=true;Check(ControllerLayout.KeyFor(visual)=="A","confirmed face button drives its physical model");
+        visual.Name="L2 / LT";Check(ControllerLayout.KeyFor(visual)=="LT","saved trigger alias resolves to Xbox LT");
+        visual.Name="Custom key";Check(ControllerLayout.KeyFor(visual)==null,"custom name cannot falsely target a known button");
+        visual.Locked=true;visual.Target="Left";Check(ControllerLayout.KeyFor(visual)=="LEFT","locked dpad uses direction instead of editable name");
+        visual.Reserved=true;Check(ControllerLayout.KeyFor(visual)==null,"reserved direction axes never double-light a control");
         Console.WriteLine("PASS: "+count+" behavior checks");
     }
 }

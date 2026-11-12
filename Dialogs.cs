@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace PadDesk {
     public class DialogBase : Window {
@@ -47,23 +48,27 @@ namespace PadDesk {
         readonly Profile profile;readonly bool locate;readonly Func<Source,string,string> assign;
         Snapshot neutral,current;CaptureDetector detector;readonly string[] labels;int step,done;bool finished,started;
         readonly TextBlock prompt;readonly ProgressBar progress;readonly Button skip,neutralButton;readonly Action<Snapshot> recordNeutral;
+        readonly ControllerView controllerView;readonly DispatcherTimer advance=new DispatcherTimer();bool advancing;
         public CalibrationDialog(Window owner,Profile p,Snapshot initial,bool locate,Func<Source,string,string> assign,Action<Snapshot> recordNeutral):base(owner,locate?"按实体键定位":"逐个对准实体按键",locate?"先松开全部按键、扳机和摇杆并记录中立状态，再按要设置的实体键。此时不会发送鼠标或键盘事件。":"先松开全部按键、扳机和摇杆并记录中立状态，再按提示校准。没有的键可跳过；方向键保持原配置。") {
             profile=p;this.locate=locate;this.assign=assign;this.recordNeutral=recordNeutral;current=initial;neutral=initial.Clone();
+            Width=650;
+            controllerView=new ControllerView {Height=275,GuidanceMode=true,Margin=new Thickness(0,0,0,8)};Panel.Children.Add(controllerView);controllerView.SetLayout(profile.VisualLayout);controllerView.FocusControl(null);
+            advance.Interval=TimeSpan.FromMilliseconds(380);advance.Tick+=delegate{advance.Stop();advancing=false;Next();};Closed+=delegate{advance.Stop();};
             foreach(var m in p.Mappings.Where(m=>m.Input.Kind=="Axis" && m.Input.Index<neutral.Axes.Length))neutral.Axes[m.Input.Index]=(short)m.Input.Rest;
             detector=new CaptureDetector(neutral,p.StickX,p.StickY);
             var list=new List<string>{"A","B","X","Y","L1 / LB","R1 / RB","L2 / LT","R2 / RT","返回 / Select","开始 / Start","左摇杆按下","右摇杆按下","Home","Capture"};
             int extra=Math.Max(0,p.Mappings.Count(m=>!m.Locked && m.Input.Kind=="Button")-14);for(int i=0;i<extra;i++)list.Add("额外按钮 "+(i+1));labels=list.ToArray();
-            prompt=new TextBlock {FontSize=30,FontWeight=FontWeights.Bold,HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,10,0,20)};Panel.Children.Add(prompt);
+            prompt=new TextBlock {FontSize=24,FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,8,0,15)};Panel.Children.Add(prompt);
             progress=new ProgressBar {Minimum=0,Maximum=labels.Length,Height=6,Foreground=new SolidColorBrush(Color.FromRgb(83,101,233))};if(!locate)Panel.Children.Add(progress);
             Button("结束",delegate{Close();});skip=Button("跳过此键",Next);skip.IsEnabled=false;if(locate)skip.Visibility=Visibility.Collapsed;
             neutralButton=Button("记录松开状态",delegate{if(!current.Connected || current.DeviceId!=profile.DeviceId)return;if(current.Buttons.Any(b=>b) || current.Hats.Any(h=>h!=0)){Status.Text="请先松开所有手柄按键和方向键。";return;}neutral=current.Clone();recordNeutral(neutral);detector=new CaptureDetector(neutral,profile.StickX,profile.StickY);started=true;neutralButton.Visibility=Visibility.Collapsed;skip.IsEnabled=true;UpdatePrompt();},true);
             FinishLayout();prompt.Text="松开全部输入后，记录中立状态";Status.Text="请让两个摇杆自然回中，并完全松开两个扳机。";
         }
-        void UpdatePrompt(){prompt.Text=locate?"按下要定位的实体键":"请按实体  "+labels[step];if(!locate)Status.Text="第 "+(step+1)+" / "+labels.Length+" 步 · 请先松开所有按键";}
-        void Next(){if(finished)return;step++;progress.Value=step;if(step>=labels.Length){finished=true;prompt.Text="对准完成";Status.Text="已确认 "+done+" 个实体键。其余输入可用“按键定位”选择并命名。";skip.IsEnabled=false;return;}detector=new CaptureDetector(neutral,profile.StickX,profile.StickY);UpdatePrompt();}
-        public void Poll(Snapshot s){current=s;if(!s.Connected){Status.Text="手柄已断开，请重新连接或结束校准。";return;}if(s.DeviceId!=profile.DeviceId){Status.Text="当前设备已改变，请结束后重新校准。";return;}if(finished || !started)return;Source input=detector.Poll(s);if(input==null)return;
+        void UpdatePrompt(){string key=locate?null:ControllerLayout.Key(labels[step]);controllerView.FocusControl(key);prompt.Text=locate?"按下要定位的实体键":"请按  "+(key==null?labels[step]:ControllerLayout.Caption(key,profile.VisualLayout));if(!locate)Status.Text="第 "+(step+1)+" / "+labels.Length+" 步 · "+(key==null?"扩展键因型号而异，请按实体标记确认；没有可跳过。":"请先松开其他按键，再按模型中发光的实体键。");}
+        void Next(){if(finished)return;step++;progress.Value=step;if(step>=labels.Length){finished=true;controllerView.FocusControl(null);prompt.Text="对准完成";Status.Text="已确认 "+done+" 个实体键。其余输入可用“按键定位”选择并命名。";skip.IsEnabled=false;return;}skip.IsEnabled=true;detector=new CaptureDetector(neutral,profile.StickX,profile.StickY);UpdatePrompt();}
+        public void Poll(Snapshot s){current=s;controllerView.UpdateInput(s,profile);if(!s.Connected){Status.Text="手柄已断开，请重新连接或结束校准。";return;}if(s.DeviceId!=profile.DeviceId){Status.Text="当前设备已改变，请结束后重新校准。";return;}if(finished || !started || advancing)return;Source input=detector.Poll(s);if(input==null)return;
             string error=assign(input,locate?"":labels[step]);if(error!=null){Status.Text=error;detector=new CaptureDetector(neutral,profile.StickX,profile.StickY);return;}
-            if(locate){DialogResult=true;return;}done++;Next();
+            if(locate){DialogResult=true;return;}done++;advancing=true;skip.IsEnabled=false;prompt.Text="✓ 已识别 · "+ControllerLayout.Caption(ControllerLayout.Key(labels[step]),profile.VisualLayout);Status.Text="请松开按键，准备下一步。";controllerView.UpdateInput(s,profile);advance.Start();
         }
     }
     public sealed class StickDialog : DialogBase {

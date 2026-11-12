@@ -20,6 +20,7 @@ namespace PadDesk {
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern Bind SDL_GameControllerGetBindForButton(IntPtr p,int i);
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern Bind SDL_GameControllerGetBindForAxis(IntPtr p,int i);
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern byte SDL_GameControllerGetButton(IntPtr p,int i);
+        [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern short SDL_GameControllerGetAxis(IntPtr p,int i);
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern IntPtr SDL_JoystickOpen(int i);
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern void SDL_JoystickClose(IntPtr p);
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern int SDL_JoystickGetAttached(IntPtr p);
@@ -57,6 +58,7 @@ namespace PadDesk {
                 }
             }
             var s=new Snapshot {Connected=joy!=IntPtr.Zero,DeviceId=id,Name=name};if(!s.Connected)return s;
+            if(pad!=IntPtr.Zero){s.RightStickX=Sdl.SDL_GameControllerGetAxis(pad,2)/32768.0;s.RightStickY=Sdl.SDL_GameControllerGetAxis(pad,3)/32768.0;}
             Sdl.SDL_JoystickUpdate();
             s.Buttons=Enumerable.Range(0,Sdl.SDL_JoystickNumButtons(joy)).Select(i=>Sdl.SDL_JoystickGetButton(joy,i)!=0).ToArray();
             s.Axes=Enumerable.Range(0,Sdl.SDL_JoystickNumAxes(joy)).Select(i=>Sdl.SDL_JoystickGetAxis(joy,i)).ToArray();

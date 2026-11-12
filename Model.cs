@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -9,8 +9,9 @@ using System.Runtime.Serialization.Json;
 namespace PadDesk {
     public class Snapshot {
         public bool Connected; public string DeviceId="",Name="";
+        public double RightStickX,RightStickY;
         public bool[] Buttons=new bool[0]; public short[] Axes=new short[0]; public byte[] Hats=new byte[0]; public bool[] Dpad=new bool[4];
-        public Snapshot Clone() { return new Snapshot {Connected=Connected,DeviceId=DeviceId,Name=Name,Buttons=(bool[])Buttons.Clone(),Axes=(short[])Axes.Clone(),Hats=(byte[])Hats.Clone(),Dpad=(bool[])Dpad.Clone()}; }
+        public Snapshot Clone() { return new Snapshot {Connected=Connected,DeviceId=DeviceId,Name=Name,RightStickX=RightStickX,RightStickY=RightStickY,Buttons=(bool[])Buttons.Clone(),Axes=(short[])Axes.Clone(),Hats=(byte[])Hats.Clone(),Dpad=(bool[])Dpad.Clone()}; }
     }
     [DataContract] public class Source {
         [DataMember] public string Kind="Button";
@@ -60,6 +61,11 @@ namespace PadDesk {
     }
     [DataContract] public class Profile {
         [DataMember] public int Version=2;
+        [DataMember] public string VisualLayout="Xbox";
+        public bool SetDpadSteps(string horizontal,string vertical) {
+            int x,y;if(!int.TryParse(horizontal,out x)||!int.TryParse(vertical,out y)||x<1||x>5000||y<1||y>5000)return false;
+            HorizontalStep=x;VerticalStep=y;return true;
+        }
         [DataMember] public string DeviceId="",DeviceName="";
         [DataMember] public int HorizontalStep=30,VerticalStep=20,RepeatDelayMs=350,RepeatIntervalMs=90;
         [DataMember] public bool RepeatEnabled=true;
