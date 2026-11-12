@@ -1,0 +1,20 @@
+# Personal controller configuration and runtime state
+/profiles/
+/status.txt
+/diagnostic.txt
+/error.log
+*.log
+*.tmp
+*.bak
+
+# Development outputs (the release exe and SDL runtime are intentionally tracked)
+*.pdb
+/Tests.exe
+/IntegrationTests.exe
+/Tests/
+/packages/
+/.vs/
+/obj/
+/artifacts/
+/.DS_Store
+Thumbs.db
