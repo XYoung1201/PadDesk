@@ -1,0 +1,2 @@
+# Let the PadDesk service (group "input") create virtual keyboard / mouse devices.
+KERNEL=="uinput", SUBSYSTEM=="misc", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"

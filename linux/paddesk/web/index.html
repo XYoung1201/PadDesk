@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PadDesk 手柄控制台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="seal">手</span><div><b>PadDesk</b><small>手柄控制台 · 树莓派</small></div></div>
+  <div class="device">
+    <span id="status" class="pill">连接中…</span>
+    <select id="padSelect" title="选择手柄"></select>
+  </div>
+  <button id="pauseBtn" class="ghost">暂停</button>
+</header>
+<div id="banner" class="banner" hidden></div>
+
+<main>
+  <section class="stage card">
+    <div class="stage-head">
+      <h2 id="padName">等待手柄</h2>
+      <div class="seg" id="layoutSeg">
+        <button data-layout="xbox" class="on">Xbox 布局</button>
+        <button data-layout="nintendo">任天堂布局</button>
+      </div>
+    </div>
+    <svg id="pad" viewBox="0 0 600 380" aria-label="手柄示意图">
+      <path class="shell" d="M170 70 Q300 50 430 70 Q520 82 555 180 Q590 300 540 340 Q500 370 455 320 L405 262 Q300 250 195 262 L145 320 Q100 370 60 340 Q10 300 45 180 Q80 82 170 70Z"/>
+      <g id="dynamic"></g>
+    </svg>
+    <div class="live">
+      <div><span class="k">摇杆输出</span><span id="stickVal">0.00, 0.00</span></div>
+      <div><span class="k">正在按下</span><span id="pressed">—</span></div>
+    </div>
+  </section>
+
+  <section class="panel card">
+    <nav class="tabs" id="tabs">
+      <button data-tab="pad" class="on">手柄按键</button>
+      <button data-tab="remote">遥控 / 蓝牙外设</button>
+      <button data-tab="motion">移动设置</button>
+      <button data-tab="settings">设置</button>
+    </nav>
+
+    <div class="tab" id="tab-pad">
+      <div class="toolbar">
+        <button id="locateBtn">按键定位</button>
+        <button id="resetBtn" class="ghost">恢复默认</button>
+        <span id="padCount" class="muted"></span>
+      </div>
+      <div class="editor" id="editor-pad"></div>
+      <div class="list" id="list-pad"></div>
+    </div>
+
+    <div class="tab" id="tab-remote" hidden>
+      <div class="toolbar">
+        <button id="learnBtn">学习按键</button>
+        <button id="removeBtn" class="ghost">删除</button>
+        <span id="remoteCount" class="muted"></span>
+      </div>
+      <div class="editor" id="editor-remote"></div>
+      <div class="list" id="list-remote"></div>
+    </div>
+
+    <div class="tab" id="tab-motion" hidden>
+      <form id="motionForm" class="form">
+        <h3>左摇杆 · 连续移动鼠标</h3>
+        <label class="check"><input type="checkbox" name="stick_enabled"> 启用摇杆移动</label>
+        <label>速度 <span class="hint">像素 / 秒</span><input type="range" name="speed" min="50" max="3000" step="10"><output></output></label>
+        <label>回中死区<input type="range" name="deadzone" min="0.05" max="0.5" step="0.01"><output></output></label>
+        <label>操控曲线<input type="range" name="curve" min="1" max="3" step="0.1"><output></output></label>
+        <div class="row">
+          <label>水平轴<select name="stick_x"></select></label>
+          <label>垂直轴<select name="stick_y"></select></label>
+        </div>
+        <div class="row">
+          <label class="check"><input type="checkbox" name="invert_x"> 反转水平</label>
+          <label class="check"><input type="checkbox" name="invert_y"> 反转垂直</label>
+        </div>
+        <button type="button" id="centerBtn" class="ghost">松开摇杆后记录中心</button>
+        <h3>方向键 · 步进移动</h3>
+        <div class="row">
+          <label>水平步长<input type="number" name="h_step" min="1" max="5000"></label>
+          <label>垂直步长<input type="number" name="v_step" min="1" max="5000"></label>
+        </div>
+        <label class="check"><input type="checkbox" name="repeat_enabled"> 长按连续移动（音量键同样连续调节）</label>
+        <div class="row">
+          <label>长按延迟 ms<input type="number" name="repeat_delay_ms" min="100" max="5000"></label>
+          <label>重复间隔 ms<input type="number" name="repeat_interval_ms" min="30" max="5000"></label>
+        </div>
+        <button type="submit">保存移动设置</button>
+      </form>
+    </div>
+
+    <div class="tab" id="tab-settings" hidden>
+      <div class="form">
+        <h3>按键外设</h3>
+        <p class="muted">勾选“独占”后，该设备原本的按键功能被屏蔽，只执行 PadDesk 的映射（Windows 版做不到）。请不要独占你正在打字用的键盘。</p>
+        <div id="deviceList"></div>
+        <h3>HOG 配置文件</h3>
+        <p class="muted">HOG 目前没有 Linux 版。若把 HOG.conf 放在本机，可填写路径，让“按键序列”列出其中的热键。</p>
+        <div class="row"><input id="hogPath" placeholder="/home/pi/.config/HOG/HOG.conf"><button id="hogSave" class="ghost">保存</button></div>
+        <p id="hogInfo" class="muted"></p>
+        <h3>后台运行</h3>
+        <p class="muted">映射由系统服务 <code>paddesk.service</code> 执行，开机自动启动；关闭这个窗口不影响映射。暂停 / 恢复：<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F12</kbd>，或终端执行 <code>paddesk toggle</code>。</p>
+        <p class="muted" id="version"></p>
+      </div>
+    </div>
+  </section>
+</main>
+<footer id="footer"></footer>
+
+<div id="learnOverlay" class="overlay" hidden>
+  <div class="dialog">
+    <h3 id="learnTitle">请按下要识别的键</h3>
+    <p id="learnText" class="muted"></p>
+    <button id="learnCancel" class="ghost">取消</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
