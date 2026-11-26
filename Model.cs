@@ -193,6 +193,11 @@ namespace PadDesk {
             int x,y;if(!int.TryParse(horizontal,out x)||!int.TryParse(vertical,out y)||x<1||x>5000||y<1||y>5000)return false;
             HorizontalStep=x;VerticalStep=y;return true;
         }
+        // Hold-to-repeat timing for the D-pad and volume keys; both values change together or not at all.
+        public bool SetRepeat(string delay,string interval) {
+            int d,i;if(!int.TryParse(delay,out d)||!int.TryParse(interval,out i)||d<100||d>5000||i<30||i>5000)return false;
+            RepeatDelayMs=d;RepeatIntervalMs=i;return true;
+        }
         [DataMember] public string DeviceId="",DeviceName="";
         [DataMember] public int HorizontalStep=30,VerticalStep=20,RepeatDelayMs=350,RepeatIntervalMs=90;
         [DataMember] public bool RepeatEnabled=true;
