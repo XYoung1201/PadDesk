@@ -45,16 +45,29 @@ namespace PadDesk {
     }
     public sealed class KeyDialog : DialogBase {
         public int[] Keys {get;private set;}
-        readonly TextBlock preview;readonly ComboBox manual;
-        public KeyDialog(Window owner,int[] existing):base(owner,"选择键盘输出","在这里按下一个键或组合键。输出会与手柄同步：按下保持，松开弹起。") {
-            Keys=(int[])existing.Clone();preview=new TextBlock {Text=KeyNames.Chord(Keys),FontFamily=new FontFamily("Cascadia Mono, Consolas"),FontSize=26,FontWeight=FontWeights.SemiBold,HorizontalAlignment=HorizontalAlignment.Center};
+        readonly TextBlock preview;readonly ComboBox manual;readonly CheckBox[] mods;bool syncing;
+        static readonly int[] modKeys={17,18,16,91};static readonly string[] modNames={"Ctrl","Alt","Shift","Win"};
+        public KeyDialog(Window owner,int[] existing):base(owner,"选择键盘输出","在这里按下一个键或组合键。输出会与手柄同步：按下保持，松开弹起。\n想“按住一个键、反复点另一个键”（如 Alt+Tab、Win+Tab、Ctrl+Win+←/→ 切换桌面），请把两个实体键分别映射：例如 LB → Alt，A → Tab。") {
+            Keys=(int[])existing.Clone();preview=new TextBlock {Text=KeyNames.Chord(Keys),FontFamily=new FontFamily("Cascadia Mono, Consolas"),FontSize=26,FontWeight=FontWeights.SemiBold,HorizontalAlignment=HorizontalAlignment.Center,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center};
             Panel.Children.Add(new Border {Background=Theme.Brush("#0D0E10"),BorderBrush=Theme.Brush("#34363D"),BorderThickness=new Thickness(1,1,1,3),CornerRadius=new CornerRadius(12),Padding=new Thickness(20,26,20,26),Margin=new Thickness(0,0,0,22),Child=preview});
-            Panel.Children.Add(new TextBlock {Text="也可直接选择键盘键（包含 Esc、Win 等）",FontSize=12,Foreground=Theme.Brush("#66625C"),Margin=new Thickness(0,0,0,8)});
+            Panel.Children.Add(new TextBlock {Text="系统会拦截的组合（Alt+Tab、Win 键等）可用下方勾选修饰键 + 选择按键组成；只勾修饰键表示单独按住它。",FontSize=12,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("#66625C"),Margin=new Thickness(0,0,0,8)});
+            var row=new StackPanel {Orientation=Orientation.Horizontal,Margin=new Thickness(0,0,0,10)};mods=new CheckBox[modKeys.Length];
+            for(int i=0;i<modKeys.Length;i++){mods[i]=new CheckBox {Content=modNames[i],Margin=new Thickness(0,0,18,0),Foreground=Theme.Brush("#ECE6DB"),VerticalAlignment=VerticalAlignment.Center};mods[i].Checked+=delegate{Rebuild();};mods[i].Unchecked+=delegate{Rebuild();};row.Children.Add(mods[i]);}
+            Panel.Children.Add(row);
             manual=new ComboBox {MaxDropDownHeight=240};
-            foreach(int vk in Enumerable.Range(8,247).Where(k=>k<=254))manual.Items.Add(new ComboBoxItem {Content=KeyNames.Name(vk),Tag=vk});
-            manual.SelectionChanged+=delegate{if(manual.SelectedItem!=null){Keys=new[]{(int)((ComboBoxItem)manual.SelectedItem).Tag};preview.Text=KeyNames.Chord(Keys);}};Panel.Children.Add(manual);
+            manual.Items.Add(new ComboBoxItem {Content="（不加其他键）",Tag=0});
+            foreach(int vk in Enumerable.Range(8,247).Where(k=>k<=254 && !KeyNames.Modifier(k) && !KeyNames.Name(k).StartsWith("VK ")))manual.Items.Add(new ComboBoxItem {Content=KeyNames.Name(vk),Tag=vk});
+            manual.SelectionChanged+=delegate{Rebuild();};Panel.Children.Add(manual);
+            Sync();
             Button("取消",delegate{DialogResult=false;});Button("使用此按键",delegate{if(Keys.Length>0)DialogResult=true;},true);FinishLayout();
             PreviewKeyDown+=OnKey;
+        }
+        void Sync(){syncing=true;for(int i=0;i<modKeys.Length;i++)mods[i].IsChecked=Keys.Any(k=>KeyNames.Canonical(k)==KeyNames.Canonical(modKeys[i]) || modKeys[i]==91 && k==92);int main=Keys.FirstOrDefault(k=>!KeyNames.Modifier(k));manual.SelectedItem=manual.Items.Cast<ComboBoxItem>().FirstOrDefault(c=>(int)c.Tag==main);syncing=false;}
+        void Rebuild(){
+            if(syncing)return;var keys=new List<int>();
+            for(int i=0;i<modKeys.Length;i++)if(mods[i].IsChecked==true)keys.Add(modKeys[i]);
+            var item=manual.SelectedItem as ComboBoxItem;int main=item==null?0:(int)item.Tag;if(main!=0)keys.Add(main);
+            Keys=keys.ToArray();preview.Text=KeyNames.Chord(Keys);
         }
         void OnKey(object sender,KeyEventArgs e) {
             if(Keyboard.FocusedElement is ComboBox)return;
@@ -62,8 +75,57 @@ namespace PadDesk {
             var keys=new List<int>();var mods=Keyboard.Modifiers;
             if((mods&ModifierKeys.Control)!=0)keys.Add(17);if((mods&ModifierKeys.Alt)!=0)keys.Add(18);if((mods&ModifierKeys.Shift)!=0)keys.Add(16);if((mods&ModifierKeys.Windows)!=0)keys.Add(91);
             if(!KeyNames.Modifier(vk))keys.Add(vk);else if(keys.Count==0)keys.Add(vk);
-            Keys=keys.Distinct().ToArray();preview.Text=KeyNames.Chord(Keys);Status.Text="已录入。点击“使用此按键”，再在主窗口点击“应用”。";e.Handled=true;
+            Keys=keys.Distinct().ToArray();preview.Text=KeyNames.Chord(Keys);Sync();Status.Text="已录入。点击“使用此按键”，再在主窗口点击“应用”。";e.Handled=true;
         }
+    }
+    // Edits a button's key sequence: either a HOG hotkey (letters, * and +) or general chords such as "Win+Ctrl+Right".
+    public sealed class SequenceDialog : DialogBase {
+        public int[][] Steps {get;private set;}
+        public string Text {get;private set;}
+        public string Mode {get;private set;}
+        readonly RadioButton hog,keys;readonly TextBox box;readonly TextBlock preview;
+        public SequenceDialog(Window owner,string mode,string text):base(owner,"按键序列","按下手柄键时，依次点按序列里的每一步（每步约 30 ms）。松开手柄键不会中断已开始的序列。") {
+            Mode=mode=="Keys"?"Keys":"Hog";Text=text??"";Steps=new int[0][];
+            var modes=new StackPanel {Orientation=Orientation.Horizontal,Margin=new Thickness(0,0,0,12)};
+            hog=new RadioButton {Content="HOG 热键",GroupName="seqmode",Foreground=Theme.Brush("#ECE6DB"),Margin=new Thickness(0,0,24,0),IsChecked=Mode=="Hog"};
+            keys=new RadioButton {Content="通用按键序列",GroupName="seqmode",Foreground=Theme.Brush("#ECE6DB"),IsChecked=Mode=="Keys"};
+            hog.Checked+=delegate{Mode="Hog";Update();};keys.Checked+=delegate{Mode="Keys";Update();};
+            modes.Children.Add(hog);modes.Children.Add(keys);Panel.Children.Add(modes);
+            string hogPath;var entries=HogConfig.Load(out hogPath);
+            if(entries.Count>0) {
+                Panel.Children.Add(new TextBlock {Text="从 HOG 配置选择（"+hogPath+"）",FontSize=12,Foreground=Theme.Brush("#66625C"),Margin=new Thickness(0,0,0,6),TextTrimming=TextTrimming.CharacterEllipsis});
+                var pick=new ComboBox {MaxDropDownHeight=280,Margin=new Thickness(0,0,0,12)};foreach(var entry in entries)pick.Items.Add(entry);
+                pick.SelectionChanged+=delegate{if(pick.SelectedItem==null)return;hog.IsChecked=true;Mode="Hog";box.Text=((HogConfig.Entry)pick.SelectedItem).Hotkey;};
+                Panel.Children.Add(pick);
+            }
+            box=new TextBox {Text=Text,FontFamily=new FontFamily("Cascadia Mono, Consolas"),FontSize=18,Padding=new Thickness(10,6,10,6)};box.TextChanged+=delegate{Update();};Panel.Children.Add(box);
+            preview=new TextBlock {FontSize=13,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("#9FD6C6"),Margin=new Thickness(0,10,0,0)};Panel.Children.Add(preview);
+            Panel.Children.Add(new TextBlock {TextWrapping=TextWrapping.Wrap,FontSize=12,LineHeight=19,Foreground=Theme.Brush("#66625C"),Margin=new Thickness(0,12,0,0),
+                Text="HOG 热键：直接写 HOG 配置里的字母序列，如 JFQR；* 表示先点一下左 Ctrl，+ 表示右 Ctrl（如 *JFYX、****）。\n通用序列：每步用空格分隔，同时按下的键用 + 连接，如 Win+Ctrl+Right、Ctrl+C Ctrl+V、VolUp VolUp。\n可用键名：Ctrl Alt Shift Win Tab Enter Esc Space Left Right Up Down Home End PgUp PgDn Delete F1–F24 A–Z 0–9 VolUp VolDown Mute PlayPause Next Prev。"});
+            Button("取消",delegate{DialogResult=false;});Button("使用此序列",delegate{if(Update())DialogResult=true;},true);FinishLayout();
+            Loaded+=delegate{box.Focus();box.SelectAll();};Update();
+        }
+        bool Update() {
+            if(box==null || preview==null)return false;
+            string error;var steps=Sequences.Parse(Mode,box.Text,out error);
+            if(steps==null){preview.Text="";Status.Text=box.Text.Trim().Length==0?"":error;Steps=new int[0][];return false;}
+            Steps=steps;Text=box.Text.Trim();if(Mode=="Hog")Text=Text.ToUpperInvariant();Status.Text="";
+            preview.Text="共 "+steps.Length+" 步： "+Sequences.Describe(steps);return true;
+        }
+    }
+    // Waits for a key on a remote or Bluetooth HID device and returns it as an input source.
+    public sealed class RemoteLearnDialog : DialogBase {
+        public Source Learned {get;private set;}
+        readonly RemoteInput remote;readonly TextBlock shown;readonly Button add;
+        public RemoteLearnDialog(Window owner,RemoteInput remote):base(owner,"学习遥控 / 蓝牙按键","按下遥控器、蓝牙遥控器、翻页笔或其他外设上的按键。会显示来自哪个设备，确认无误后点击“添加此按键”。这里不会发送鼠标或键盘输出。") {
+            this.remote=remote;
+            shown=new TextBlock {Text="等待按键…",FontFamily=Theme.SerifCn,FontSize=22,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,HorizontalAlignment=HorizontalAlignment.Center};
+            Panel.Children.Add(new Border {Background=Theme.Brush("#0D0E10"),BorderBrush=Theme.Brush("#34363D"),BorderThickness=new Thickness(1,1,1,3),CornerRadius=new CornerRadius(12),Padding=new Thickness(20,26,20,26),Child=shown});
+            Status.Text=remote.Registered?"提示：电脑自带键盘的按键也会显示，请看清设备名。":"无法注册原始输入，外设按键可能无法识别。";
+            Button("取消",delegate{DialogResult=false;});add=Button("添加此按键",delegate{if(Learned!=null)DialogResult=true;},true);add.IsEnabled=false;FinishLayout();
+            remote.Pressed+=OnPressed;Closed+=delegate{remote.Pressed-=OnPressed;};
+        }
+        void OnPressed(Source source){Learned=source;shown.Text=RemoteKeys.Caption(source.Mask,source.Index)+"\n"+source.DeviceName;add.IsEnabled=true;}
     }
     public sealed class CalibrationDialog : DialogBase {
         readonly Profile profile;readonly bool locate;readonly Func<Source,string,string> assign;

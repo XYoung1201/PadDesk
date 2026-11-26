@@ -36,17 +36,33 @@ namespace PadDesk {
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern void SDL_JoystickUpdate();
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern void SDL_PumpEvents();
         [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern void SDL_FlushEvents(uint a,uint b);
+        [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern int SDL_PollEvent(IntPtr e);
+        [DllImport(D,CallingConvention=CallingConvention.Cdecl)] public static extern int SDL_JoystickInstanceID(IntPtr p);
         public static string Utf8(IntPtr p) {if(p==IntPtr.Zero)return "";int n=0;while(Marshal.ReadByte(p,n)!=0)n++;byte[] b=new byte[n];Marshal.Copy(p,b,0,n);return Encoding.UTF8.GetString(b);}
     }
     public sealed class Device : IDisposable {
         IntPtr pad,joy;string name="",id="";double nextScan;
+        readonly IntPtr eventBuffer=Marshal.AllocHGlobal(64);
+        // Set by Read when a button was pressed and released (or released and re-pressed) between two polls; null otherwise.
+        // Feeding it to the engine before the regular snapshot keeps every press and release, even very short taps.
+        public Snapshot Partial {get;private set;}
         public Device() {
             Sdl.SDL_SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS","1");Sdl.SDL_SetHint("SDL_GAMECONTROLLER_USE_BUTTON_LABELS","1");
             if(Sdl.SDL_Init(0x2200)!=0)throw new Exception("无法初始化 SDL 手柄库。");
         }
         void Close() {if(pad!=IntPtr.Zero)Sdl.SDL_GameControllerClose(pad);else if(joy!=IntPtr.Zero)Sdl.SDL_JoystickClose(joy);pad=joy=IntPtr.Zero;name=id="";}
         public Snapshot Read(double now) {
-            Sdl.SDL_PumpEvents();Sdl.SDL_JoystickUpdate();Sdl.SDL_FlushEvents(0,65535);
+            Partial=null;
+            var downs=new HashSet<int>();var ups=new HashSet<int>();var hats=new Dictionary<int,byte>();var padDowns=new HashSet<int>();var padUps=new HashSet<int>();
+            Sdl.SDL_PumpEvents();Sdl.SDL_JoystickUpdate();
+            int instance=joy==IntPtr.Zero?-1:Sdl.SDL_JoystickInstanceID(joy);
+            while(Sdl.SDL_PollEvent(eventBuffer)==1) {
+                uint type=(uint)Marshal.ReadInt32(eventBuffer,0);if(instance<0 || Marshal.ReadInt32(eventBuffer,8)!=instance)continue;
+                int index=Marshal.ReadByte(eventBuffer,12);
+                if(type==0x603)downs.Add(index);else if(type==0x604)ups.Add(index);
+                else if(type==0x602){byte seen;hats.TryGetValue(index,out seen);hats[index]=(byte)(seen|Marshal.ReadByte(eventBuffer,13));}
+                else if(type==0x651 && index>=11 && index<=14)padDowns.Add(index-11);else if(type==0x652 && index>=11 && index<=14)padUps.Add(index-11);
+            }
             if(joy!=IntPtr.Zero && Sdl.SDL_JoystickGetAttached(joy)==0){Close();nextScan=0;}
             if(joy==IntPtr.Zero && now>=nextScan) {
                 nextScan=now+1;
@@ -63,7 +79,18 @@ namespace PadDesk {
             s.Buttons=Enumerable.Range(0,Sdl.SDL_JoystickNumButtons(joy)).Select(i=>Sdl.SDL_JoystickGetButton(joy,i)!=0).ToArray();
             s.Axes=Enumerable.Range(0,Sdl.SDL_JoystickNumAxes(joy)).Select(i=>Sdl.SDL_JoystickGetAxis(joy,i)).ToArray();
             s.Hats=Enumerable.Range(0,Sdl.SDL_JoystickNumHats(joy)).Select(i=>Sdl.SDL_JoystickGetHat(joy,i)).ToArray();
-            if(pad!=IntPtr.Zero)s.Dpad=Enumerable.Range(11,4).Select(i=>Sdl.SDL_GameControllerGetButton(pad,i)!=0).ToArray();return s;
+            if(pad!=IntPtr.Zero)s.Dpad=Enumerable.Range(11,4).Select(i=>Sdl.SDL_GameControllerGetButton(pad,i)!=0).ToArray();
+            Partial=Between(s,downs,ups,hats,padDowns,padUps);return s;
+        }
+        // Builds the in-between state: buttons that went down but are already up again are shown held, and
+        // buttons that were released but are down again are shown released. Stale events cause no extra edge.
+        public static Snapshot Between(Snapshot s,ICollection<int> downs,ICollection<int> ups,IDictionary<int,byte> hats,ICollection<int> padDowns,ICollection<int> padUps) {
+            Snapshot mid=null;
+            Func<Snapshot> get=delegate{if(mid==null)mid=s.Clone();return mid;};
+            for(int i=0;i<s.Buttons.Length;i++){if(!s.Buttons[i] && downs.Contains(i))get().Buttons[i]=true;else if(s.Buttons[i] && ups.Contains(i))get().Buttons[i]=false;}
+            foreach(var pair in hats)if(pair.Key<s.Hats.Length && (pair.Value&~s.Hats[pair.Key])!=0)get().Hats[pair.Key]=(byte)(s.Hats[pair.Key]|pair.Value);
+            for(int i=0;i<s.Dpad.Length;i++){if(!s.Dpad[i] && padDowns.Contains(i))get().Dpad[i]=true;else if(s.Dpad[i] && padUps.Contains(i))get().Dpad[i]=false;}
+            return mid;
         }
         Source Convert(Sdl.Bind b,Snapshot s) {
             if(b.Type==1)return new Source {Index=b.Index};
@@ -102,6 +129,6 @@ namespace PadDesk {
             }
             return p;
         }
-        public void Dispose(){Close();Sdl.SDL_Quit();}
+        public void Dispose(){Close();Sdl.SDL_Quit();Marshal.FreeHGlobal(eventBuffer);}
     }
 }

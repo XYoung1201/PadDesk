@@ -63,6 +63,67 @@ class Tests {
         visual.Name="Custom key";Check(ControllerLayout.KeyFor(visual)==null,"custom name cannot falsely target a known button");
         visual.Locked=true;visual.Target="Left";Check(ControllerLayout.KeyFor(visual)=="LEFT","locked dpad uses direction instead of editable name");
         visual.Reserved=true;Check(ControllerLayout.KeyFor(visual)==null,"reserved direction axes never double-light a control");
+        // Hold one button, tap another: LB holds Alt while A taps Tab (Alt+Tab switching).
+        p=P();p.Mappings[0].Target="Keyboard";p.Mappings[0].Keys=new[]{18};p.Mappings.Add(new Mapping {Input=new Source {Index=1},Target="Keyboard",Keys=new[]{9}});
+        e=new InputEngine();e.Tick(S(),0,p,true);r=e.Tick(S(true),.016,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:164 down","held modifier pressed alone");
+        r=e.Tick(S(true,true),.032,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:9 down","tap key pressed while modifier held");
+        r=e.Tick(S(true),.048,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:9 up","tap key released, modifier stays held");
+        r=e.Tick(S(true,true),.064,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:9 down","second tap repeats under same modifier");
+        r=e.Tick(S(),.08,p,true);Check(r.Events.Count==2 && r.Events[0].ToString()=="K:9 up" && r.Events[1].ToString()=="K:164 up","releasing both lifts tap key before modifier");
+        // Sub-frame taps are replayed as a full press and release.
+        var before=S(true);var after=S(true);
+        var mid=Device.Between(after,new[]{1},new int[0],new System.Collections.Generic.Dictionary<int,byte>(),new int[0],new int[0]);
+        Check(mid!=null && mid.Buttons[1] && !after.Buttons[1],"press and release inside one poll yields an in-between snapshot");
+        Check(Device.Between(after,new[]{0},new int[0],new System.Collections.Generic.Dictionary<int,byte>(),new int[0],new int[0])==null,"stale down event for a held button adds nothing");
+        var re=Device.Between(S(true),new int[0],new[]{0},new System.Collections.Generic.Dictionary<int,byte>(),new int[0],new int[0]);Check(re!=null && !re.Buttons[0],"release and re-press inside one poll yields a released in-between snapshot");
+        e=new InputEngine();e.Tick(S(),0,p,true);e.Tick(before,.016,p,true);
+        var pr=e.Tick(mid,.032,p,true,true);Check(pr.Events.Count==1 && pr.Events[0].ToString()=="K:9 down","partial frame presses the quick tap");
+        r=e.Tick(after,.032,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:9 up","following frame releases the quick tap");
+        // Media keys.
+        p=P();p.Mappings[0].Target="Media";p.Mappings[0].Keys=new[]{179};p.Validate();
+        e=new InputEngine();e.Tick(S(),0,p,true);r=e.Tick(S(true),.016,p,true);Check(r.Events.Count==1 && r.Events[0].ToString()=="K:179 down","play/pause pressed with button");
+        Check(e.Tick(S(true),1,p,true).Events.Count==0,"play/pause does not repeat");
+        Check(e.Tick(S(),1.02,p,true).Events.Single().ToString()=="K:179 up","play/pause released with button");
+        p.Mappings[0].Keys=new[]{175};e=new InputEngine();e.Tick(S(),0,p,true);
+        Check(e.Tick(S(true),.01,p,true).Events.Single().ToString()=="K:175 down","volume up pressed");
+        Check(e.Tick(S(true),.2,p,true).Events.Count==0,"volume waits for repeat delay");
+        Check(e.Tick(S(true),.37,p,true).Events.Single().ToString()=="K:175 up","volume repeat releases");
+        Check(e.Tick(S(true),.39,p,true).Events.Single().ToString()=="K:175 down","volume repeat presses again");
+        Check(e.Tick(S(),.4,p,true).Events.Single().ToString()=="K:175 up","volume stops on release");
+        p.Mappings[0].Keys=new[]{65};bool rejected=false;try{p.Validate();}catch(System.IO.InvalidDataException){rejected=true;}Check(rejected,"media target rejects ordinary keys");
+        // Sequences for HOG hotkeys.
+        string err;var hog=Sequences.ParseHog("*jfyx",out err);Check(hog!=null && hog.Length==5 && hog[0][0]==162 && hog[1][0]=='J' && hog[4][0]=='X',"HOG hotkey parses prefix and letters");
+        Check(Sequences.ParseHog("JF Q1",out err)==null && err!=null,"HOG hotkey rejects digits");
+        var keys=Sequences.ParseKeys("Win+Ctrl+Right  ctrl+c,VolUp",out err);Check(keys!=null && keys.Length==3 && keys[0].SequenceEqual(new[]{91,162,39}) && keys[1].SequenceEqual(new[]{162,67}) && keys[2][0]==175,"general sequence parses chords");
+        Check(Sequences.ParseKeys("Ctrl+Nope",out err)==null && err.Contains("Nope"),"unknown key name reported");
+        p=P();p.Mappings[0].Target="Sequence";p.Mappings[0].Steps=Sequences.ParseHog("JFQR",out err);p.Mappings[0].SequenceText="JFQR";p.Validate();
+        e=new InputEngine();e.Tick(S(),0,p,true);var played=new System.Collections.Generic.List<string>();double tt=0;
+        for(int i=0;i<12;i++){tt+=.016;played.AddRange(e.Tick(S(i<2),tt,p,true).Events.Select(ev=>ev.ToString()));}
+        Check(string.Join(",",played)=="K:74 down,K:74 up,K:70 down,K:70 up,K:81 down,K:81 up,K:82 down,K:82 up","sequence taps each key in order once per press");
+        p.Mappings[0].Steps=Sequences.ParseHog("****",out err);e=new InputEngine();e.Tick(S(),0,p,true);played.Clear();tt=0;
+        for(int i=0;i<10;i++){tt+=.016;played.AddRange(e.Tick(S(i==0),tt,p,true).Events.Select(ev=>ev.ToString()));}
+        Check(played.Count==8 && played.Where((x,i)=>i%2==0).All(x=>x=="K:162 down"),"repeated modifier taps stay separate");
+        e=new InputEngine();e.Tick(S(),0,p,true);e.Tick(S(true),.016,p,true);r=e.Tick(S(true),.032,p,false);Check(!e.SequencePending && r.Events.All(ev=>!ev.Down),"pause cancels a running sequence");
+        p.Mappings[0].Steps=new int[0][];rejected=false;try{p.Validate();}catch(System.IO.InvalidDataException){rejected=true;}Check(rejected,"empty sequence rejected");
+        var conf=HogConfig.Parse(new[]{"//comment","JFQR CMD:QRCODE","*JFYX TEXT:a@b.c","JFRLD CMD:RELOAD                     // 重载","bad1 CMD:X","",""});
+        Check(conf.Count==3 && conf[0].Hotkey=="JFQR" && conf[1].Action=="TEXT:a@b.c" && conf[2].Action=="CMD:RELOAD","HOG config lists valid hotkeys");
+        // Remote / Bluetooth keys.
+        var remote=new Source {Kind="Remote",Device="HID#VID_1234&PID_0001",Mask=RemoteKeys.ConsumerPage,Index=0xE9};
+        var rs=new Snapshot {Connected=true,DeviceId="remotes"};Check(!remote.Active(rs),"remote key idle");rs.Remote.Add(remote.Id);Check(remote.Active(rs),"remote key active by device and usage");
+        var other=new Source {Kind="Remote",Device="HID#VID_9999&PID_0001",Mask=RemoteKeys.ConsumerPage,Index=0xE9};Check(!other.Active(rs),"same key on another device stays separate");
+        var rp=new Profile {DeviceId="remotes",Mappings={new Mapping {Input=remote,Target="Sequence",Steps=Sequences.ParseHog("JFQR",out err),SequenceText="JFQR"}}};rp.Validate();
+        e=new InputEngine();e.Tick(new Snapshot {Connected=true,DeviceId="remotes"},0,rp,true);Check(e.Tick(rs,.016,rp,true).Events.Single().ToString()=="K:74 down","remote key drives the engine without a gamepad");
+        Check(RemoteInput.StableId(@"\\?\HID#VID_046D&PID_C52B&MI_01&Col02#7&2a8b&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}")=="HID#VID_046D&PID_C52B&MI_01&COL02","device identity drops the instance part");
+        using(var stream=new System.IO.MemoryStream()){
+            var serializer=new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(Profile));serializer.WriteObject(stream,rp);stream.Position=0;
+            var restored=(Profile)serializer.ReadObject(stream);restored.Validate();
+            Check(restored.Mappings[0].Input.Id==remote.Id && restored.Mappings[0].Steps.Length==4 && restored.Mappings[0].SequenceText=="JFQR","remote sequence mapping survives serialization");
+        }
+        string legacy="{\"DeviceId\":\"old\",\"Version\":2,\"Mappings\":[{\"Input\":{\"Kind\":\"Button\",\"Index\":0,\"Direction\":1,\"Mask\":0,\"Rest\":0,\"Threshold\":14000},\"Name\":\"A\",\"Confirmed\":true,\"Target\":\"MouseLeft\",\"Keys\":[],\"Locked\":false,\"Reserved\":false}],\"HorizontalStep\":30,\"VerticalStep\":20,\"RepeatDelayMs\":350,\"RepeatIntervalMs\":90,\"RepeatEnabled\":true,\"StickX\":0,\"StickY\":1,\"SignX\":1,\"SignY\":1,\"CenterX\":0,\"CenterY\":0,\"Deadzone\":0.16,\"Speed\":800,\"Curve\":1.6,\"StickEnabled\":true,\"StickCalibrated\":false,\"NeutralConfirmed\":false,\"VisualLayout\":\"Xbox\"}";
+        using(var stream=new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(legacy))){
+            var old=(Profile)new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(Profile)).ReadObject(stream);old.Validate();
+            Check(old.Mappings[0].Steps!=null && old.Mappings[0].Input.Device=="" && old.Mappings[0].Input.Id=="Button:0:1","profiles from the previous version still load");
+        }
         Console.WriteLine("PASS: "+count+" behavior checks");
     }
 }

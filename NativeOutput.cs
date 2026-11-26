@@ -23,6 +23,8 @@ namespace PadDesk {
         static Input Make(string token,bool down) {
             if(token.StartsWith("M:"))return new Input {data=new Union {mouse=new Mouse {flags=token=="M:L"?(down?2u:4u):(down?8u:16u)}}};
             int vk=int.Parse(token.Substring(2));uint scan=MapVirtualKey((uint)vk,4);
+            // Media, volume and browser keys are delivered by virtual-key code: their scan codes are not reliably mapped back by every keyboard layout.
+            if(KeyNames.IsMedia(vk))return new Input {type=1,data=new Union {key=new Keyboard {vk=(ushort)vk,scan=(ushort)(scan&255),flags=(down?0u:2u)|1u}}};
             bool useScan=scan!=0 && (scan>>8)!=0xE1;
             return new Input {type=1,data=new Union {key=new Keyboard {vk=(ushort)(useScan?0:vk),scan=(ushort)(scan&255),flags=(down?0u:2u)|(useScan?8u:0u)|((scan>>8)==0xE0?1u:0u)}}};
         }
