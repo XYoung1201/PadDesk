@@ -6,6 +6,8 @@
 
 适用于 Windows 10 / 11 **64 位**，使用 Windows 自带的 .NET Framework 4.x。手柄输入使用开源 **SDL 2.32.10**。无需安装 Python 或额外的 .NET SDK。
 
+> **树莓派 5 / Linux 版**：见 [`linux/`](linux/README.md)。以 systemd 后台服务运行，配置界面关闭后映射继续工作，`sudo ./install.sh` 一键安装。
+
 ## 直接运行
 
 1. 下载仓库或 Releases 中的便携压缩包并完整解压。

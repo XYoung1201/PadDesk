@@ -1,0 +1,30 @@
+[Unit]
+Description=PadDesk gamepad / remote to mouse and keyboard mapping
+Documentation=https://github.com/XYoung1201/PadDesk/tree/main/linux
+After=systemd-udevd.service systemd-modules-load.service
+
+[Service]
+Type=simple
+User=paddesk
+Group=paddesk
+SupplementaryGroups=input
+Environment=PYTHONPATH=/opt/paddesk
+Environment=PYTHONUNBUFFERED=1
+Environment=PADDESK_STATE=/var/lib/paddesk
+ExecStart=/usr/bin/python3 -m paddesk.daemon
+StateDirectory=paddesk
+StateDirectoryMode=0750
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

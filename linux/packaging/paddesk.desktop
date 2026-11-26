@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PadDesk 手柄控制台
+Name[en]=PadDesk
+Comment=配置手柄、遥控器与蓝牙外设的鼠标键盘映射（关闭窗口后映射继续运行）
+Exec=paddesk ui
+Icon=input-gaming
+Terminal=false
+Categories=Utility;Settings;HardwareSettings;
+Keywords=gamepad;controller;remote;mouse;keyboard;手柄;遥控;
+StartupWMClass=PadDesk

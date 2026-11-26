@@ -10,3 +10,5 @@
 # Preserve vendor notice formatting without whitespace diagnostics.
 LICENSE-SDL.txt -whitespace
 README-SDL.txt -whitespace
+# Linux / Raspberry Pi files must keep LF endings even when cloned on Windows.
+linux/** text eol=lf
