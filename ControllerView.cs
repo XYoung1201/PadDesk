@@ -62,13 +62,13 @@ namespace PadDesk {
             scene.Children.Add(new DirectionalLight(Color.FromRgb(118,132,150),new Vector3D(2,.3,-1)));
             scene.Children.Add(new DirectionalLight(Color.FromRgb(168,118,92),new Vector3D(-1,2,.5)));
             BuildController();
-            var caption=new StackPanel {Margin=new Thickness(28,22,0,0),MaxWidth=360,VerticalAlignment=VerticalAlignment.Top,HorizontalAlignment=HorizontalAlignment.Left,IsHitTestVisible=false};
-            modelBadge=new TextBlock {Text="XBOX",Foreground=Brush("#D9502F"),FontSize=10.5,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,6)};
-            title=new TextBlock {Text="Xbox 标准布局",Foreground=Brush("#ECE6DB"),FontSize=26,FontFamily=new FontFamily("Georgia, Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun"),TextTrimming=TextTrimming.CharacterEllipsis};
-            subtitle=new TextBlock {Text="点选按键聚焦 · 拖动旋转",Foreground=Brush("#8A857C"),FontSize=12,Margin=new Thickness(0,6,0,0),TextWrapping=TextWrapping.Wrap};
+            var caption=new StackPanel {Margin=new Thickness(20,16,0,0),MaxWidth=300,VerticalAlignment=VerticalAlignment.Top,HorizontalAlignment=HorizontalAlignment.Left,IsHitTestVisible=false};
+            modelBadge=new TextBlock {Text="XBOX",Foreground=Brush("#D9502F"),FontSize=10,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,4)};
+            title=new TextBlock {Text="Xbox 标准布局",Foreground=Brush("#ECE6DB"),FontSize=21,FontFamily=new FontFamily("Georgia, Noto Serif SC, Source Han Serif SC, STZhongsong, SimSun"),TextTrimming=TextTrimming.CharacterEllipsis};
+            subtitle=new TextBlock {Text="点选按键聚焦 · 拖动旋转",Foreground=Brush("#8A857C"),FontSize=11.5,Margin=new Thickness(0,4,0,0),TextWrapping=TextWrapping.Wrap};
             caption.Children.Add(modelBadge);caption.Children.Add(title);caption.Children.Add(subtitle);Children.Add(caption);
             caption.Effect=new System.Windows.Media.Effects.DropShadowEffect {BlurRadius=14,ShadowDepth=0,Opacity=.85,Color=Color.FromRgb(10,10,12)};
-            var reset=new Button {Content="\uE740",FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=13,Width=40,Height=34,MinHeight=34,Padding=new Thickness(0),Margin=new Thickness(0,22,24,0),HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Top,Background=Brush("#AA111215"),Foreground=Brush("#ECE6DB"),BorderBrush=Brush("#34363D"),BorderThickness=new Thickness(1),Cursor=Cursors.Hand,ToolTip="回到全貌"};
+            var reset=new Button {Content="\uE740",FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=13,Width=36,Height=30,MinHeight=30,Padding=new Thickness(0),Margin=new Thickness(0,14,18,0),HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Top,Background=Brush("#AA111215"),Foreground=Brush("#ECE6DB"),BorderBrush=Brush("#34363D"),BorderThickness=new Thickness(1),Cursor=Cursors.Hand,ToolTip="回到全貌"};
             reset.Click+=delegate{if(GuidanceMode){yaw=.21;pitch=.03;targetLook=OverviewLook;targetEye=OverviewEye;}else FocusControl(null);};Children.Add(reset);
             viewport.MouseLeftButtonDown+=MouseDownOnModel;viewport.MouseMove+=MouseMoveOnModel;viewport.MouseLeftButtonUp+=MouseUpOnModel;
             viewport.LostMouseCapture+=delegate{dragging=false;};

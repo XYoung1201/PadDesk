@@ -12,6 +12,9 @@ class Tests {
         Check(!steps.SetDpadSteps("45","5001") && steps.HorizontalStep==30 && steps.VerticalStep==20,"invalid second axis cannot partially change first axis");
         Check(!steps.SetDpadSteps("1.5","20") && !steps.SetDpadSteps("","20"),"step editor rejects decimals and empty values");
         Check(steps.SetDpadSteps("1","5000") && steps.HorizontalStep==1 && steps.VerticalStep==5000,"step editor accepts inclusive bounds");
+        Check(!steps.SetRepeat("99","90") && !steps.SetRepeat("350","29") && steps.RepeatDelayMs==350 && steps.RepeatIntervalMs==90,"repeat editor rejects out-of-range values without partial changes");
+        Check(!steps.SetRepeat("","90") && !steps.SetRepeat("350","1.5"),"repeat editor rejects empty and decimal values");
+        Check(steps.SetRepeat("100","5000") && steps.RepeatDelayMs==100 && steps.RepeatIntervalMs==5000,"repeat editor accepts inclusive bounds");
         steps.Mappings.Add(new Mapping {Input=new Source {Kind="Dpad",Index=3},Target="Right",Locked=true});var stepEngine=new InputEngine();var stepSnapshot=S();stepEngine.Tick(stepSnapshot,0,steps,true);stepSnapshot.Dpad[3]=true;
         Check(stepEngine.Tick(stepSnapshot,.016,steps,true).Dx==1,"edited horizontal step reaches input engine");
         steps.VisualLayout="Photo";

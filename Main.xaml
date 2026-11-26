@@ -7,12 +7,12 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="PadDesk · 手柄控制台" Width="1360" Height="840" MinWidth="1080" MinHeight="740"
+        Title="PadDesk · 手柄控制台" Width="1080" Height="680" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen" Background="#111215" Foreground="#ECE6DB"
         FontFamily="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI" FontSize="13"
         TextOptions.TextFormattingMode="Display" UseLayoutRounding="True" SnapsToDevicePixels="True">
   <shell:WindowChrome.WindowChrome>
-    <shell:WindowChrome CaptionHeight="56" ResizeBorderThickness="6" GlassFrameThickness="0,0,0,1" CornerRadius="0" UseAeroCaptionButtons="False" />
+    <shell:WindowChrome CaptionHeight="46" ResizeBorderThickness="6" GlassFrameThickness="0,0,0,1" CornerRadius="0" UseAeroCaptionButtons="False" />
   </shell:WindowChrome.WindowChrome>
   <Window.Resources>
     <!-- Palette -->
@@ -39,8 +39,8 @@
 
     <!-- Buttons: quiet outline by default -->
     <Style TargetType="Button">
-      <Setter Property="MinHeight" Value="36" />
-      <Setter Property="Padding" Value="16,0" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="14,0" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="Foreground" Value="{StaticResource Paper}" />
@@ -156,8 +156,8 @@
 
     <!-- Text inputs -->
     <Style TargetType="TextBox">
-      <Setter Property="MinHeight" Value="38" />
-      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="10,0" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Foreground" Value="{StaticResource Paper}" />
       <Setter Property="CaretBrush" Value="{StaticResource Vermilion}" />
@@ -188,7 +188,7 @@
 
     <!-- Dropdown (used by the keyboard picker dialog) -->
     <Style TargetType="ComboBox">
-      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="MinHeight" Value="34" />
       <Setter Property="Foreground" Value="{StaticResource Paper}" />
       <Setter Property="Template">
         <Setter.Value>
@@ -284,7 +284,7 @@
             <Setter Property="Template">
               <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                  <Border x:Name="b" CornerRadius="6" Background="Transparent" Padding="10,0" MinHeight="30">
+                  <Border x:Name="b" CornerRadius="6" Background="Transparent" Padding="8,0" MinHeight="28">
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                   </Border>
                   <ControlTemplate.Triggers>
@@ -462,7 +462,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition />
               </Grid.RowDefinitions>
-              <Border BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,0,1" Padding="24,0">
+              <Border BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,0,1" Padding="18,0">
                 <TabPanel IsItemsHost="True" />
               </Border>
               <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" />
@@ -473,13 +473,13 @@
     </Style>
     <Style TargetType="TabItem">
       <Setter Property="Foreground" Value="{StaticResource Faint}" />
-      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontSize" Value="13" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TabItem">
-            <Grid Height="52" Margin="0,0,28,0" Background="Transparent">
+            <Grid Height="42" Margin="0,0,22,0" Background="Transparent">
               <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
               <Border x:Name="line" Height="2" VerticalAlignment="Bottom" Background="{StaticResource Vermilion}" Visibility="Hidden" Margin="0,0,0,-1" />
             </Grid>
@@ -497,43 +497,16 @@
       </Setter>
     </Style>
 
-    <!-- Rename fold -->
-    <Style TargetType="Expander">
+    <!-- Small icon button (rename, etc.) -->
+    <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="FontFamily" Value="{StaticResource Glyphs}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Width" Value="30" />
+      <Setter Property="MinHeight" Value="30" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="Foreground" Value="{StaticResource Muted}" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="Expander">
-            <StackPanel>
-              <ToggleButton x:Name="toggle" Cursor="Hand" Focusable="False" HorizontalAlignment="Left" Foreground="{TemplateBinding Foreground}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-                <ToggleButton.Template>
-                  <ControlTemplate TargetType="ToggleButton">
-                    <StackPanel Orientation="Horizontal" Background="Transparent">
-                      <Path x:Name="chev" Data="M0,0 L3.5,3.5 L0,7" Stroke="#9C968C" StrokeThickness="1.3" VerticalAlignment="Center" Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
-                        <Path.RenderTransform><RotateTransform Angle="0" /></Path.RenderTransform>
-                      </Path>
-                      <ContentPresenter VerticalAlignment="Center" />
-                    </StackPanel>
-                    <ControlTemplate.Triggers>
-                      <Trigger Property="IsChecked" Value="True">
-                        <Setter TargetName="chev" Property="RenderTransform">
-                          <Setter.Value><RotateTransform Angle="90" /></Setter.Value>
-                        </Setter>
-                      </Trigger>
-                    </ControlTemplate.Triggers>
-                  </ControlTemplate>
-                </ToggleButton.Template>
-                <ContentPresenter Content="{TemplateBinding Header}" />
-              </ToggleButton>
-              <ContentPresenter x:Name="body" Visibility="Collapsed" />
-            </StackPanel>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsExpanded" Value="True">
-                <Setter TargetName="body" Property="Visibility" Value="Visible" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
     </Style>
 
     <!-- Mapping list -->
@@ -572,7 +545,7 @@
             <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8" Margin="0,1">
               <Grid>
                 <DataGridCellsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
-                <Border x:Name="bar" Width="3" HorizontalAlignment="Left" Margin="0,12" CornerRadius="1.5" Background="{StaticResource Vermilion}" Visibility="Hidden" />
+                <Border x:Name="bar" Width="3" HorizontalAlignment="Left" Margin="0,10" CornerRadius="1.5" Background="{StaticResource Vermilion}" Visibility="Hidden" />
               </Grid>
             </Border>
             <ControlTemplate.Triggers>
@@ -608,75 +581,72 @@
 
   <Grid x:Name="RootGrid" Background="{StaticResource Ink}">
     <Grid.RowDefinitions>
-      <RowDefinition Height="56" />
+      <RowDefinition Height="46" />
       <RowDefinition Height="*" />
-      <RowDefinition Height="34" />
+      <RowDefinition Height="28" />
     </Grid.RowDefinitions>
 
-    <!-- ═══ Title bar ═══ -->
+    <!-- ═══ Title bar: brand · device | state · pause | caption ═══ -->
     <Grid Grid.Row="0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="22,0,0,0">
-        <!-- Seal -->
-        <Border Width="28" Height="28" CornerRadius="6" Background="{StaticResource Vermilion}">
-          <TextBlock Text="柄" FontFamily="STKaiti, KaiTi" FontSize="19" Foreground="#FFF6EC" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+        <Border Width="24" Height="24" CornerRadius="5" Background="{StaticResource Vermilion}">
+          <TextBlock Text="柄" FontFamily="STKaiti, KaiTi" FontSize="16" Foreground="#FFF6EC" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
         </Border>
-        <TextBlock Text="PadDesk" FontFamily="{StaticResource Display}" FontSize="19" Foreground="{StaticResource Paper}" VerticalAlignment="Center" Margin="12,0,0,1" />
-        <Border Width="1" Height="16" Background="{StaticResource HairlineStrong}" Margin="16,0" VerticalAlignment="Center" />
-        <TextBlock x:Name="DeviceText" Text="正在连接手柄…" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="460" />
+        <TextBlock Text="PadDesk" FontFamily="{StaticResource Display}" FontSize="16" Foreground="{StaticResource Paper}" VerticalAlignment="Center" Margin="10,0,0,1" />
+        <Border Width="1" Height="14" Background="{StaticResource HairlineStrong}" Margin="14,0" VerticalAlignment="Center" />
+        <TextBlock x:Name="DeviceText" Text="正在连接手柄…" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="380" />
       </StackPanel>
 
-      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
-        <Border x:Name="StateBadge" CornerRadius="14" Padding="12,0" Height="28" Background="{StaticResource CeladonWash}" Margin="0,0,10,0" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+        <Border x:Name="StateBadge" CornerRadius="13" Padding="10,0" Height="26" Background="{StaticResource CeladonWash}" Margin="0,0,8,0" shell:WindowChrome.IsHitTestVisibleInChrome="True">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Ellipse x:Name="StateDot" Width="7" Height="7" Fill="{StaticResource Celadon}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <Ellipse x:Name="StateDot" Width="7" Height="7" Fill="{StaticResource Celadon}" VerticalAlignment="Center" Margin="0,0,7,0" />
             <TextBlock x:Name="StateText" Text="等待输入" Foreground="{StaticResource Celadon}" FontSize="12" VerticalAlignment="Center" />
           </StackPanel>
         </Border>
-        <Button x:Name="PauseButton" Content="暂停控制" MinHeight="30" Height="30" Padding="14,0" FontSize="12" shell:WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Ctrl + Alt + F12" />
+        <Button x:Name="PauseButton" Content="暂停控制" MinHeight="26" Height="26" Padding="12,0" FontSize="12" shell:WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="暂停 / 恢复所有映射（Ctrl + Alt + F12）" />
       </StackPanel>
 
-      <StackPanel Grid.Column="3" Orientation="Horizontal">
+      <StackPanel Grid.Column="2" Orientation="Horizontal">
         <Button x:Name="MinButton" Style="{StaticResource Caption}" Content="&#xE921;" ToolTip="最小化" />
         <Button x:Name="MaxButton" Style="{StaticResource Caption}" Content="&#xE922;" ToolTip="最大化" />
         <Button x:Name="CloseButton" Style="{StaticResource CaptionClose}" Content="&#xE8BB;" ToolTip="收起到托盘" />
       </StackPanel>
     </Grid>
 
-    <!-- ═══ Body ═══ -->
+    <!-- ═══ Body: model stage | inspector ═══ -->
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" MinWidth="560" />
-        <ColumnDefinition Width="408" />
+        <ColumnDefinition Width="*" MinWidth="440" />
+        <ColumnDefinition Width="372" />
       </Grid.ColumnDefinitions>
 
-      <!-- Stage -->
+      <!-- Stage: 3D model, layout switch, live input, calibration actions -->
       <Grid>
         <Border x:Name="ControllerHost" ClipToBounds="True" />
 
-        <ListBox x:Name="ModelCombo" Style="{StaticResource Segmented}" SelectedIndex="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,78,0" Width="176" FontSize="12">
+        <ListBox x:Name="ModelCombo" Style="{StaticResource Segmented}" SelectedIndex="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,64,0" Width="160" FontSize="11.5" ToolTip="模型外观">
           <ListBoxItem Content="Xbox" />
           <ListBoxItem Content="Switch Pro" />
         </ListBox>
 
-        <!-- Bottom deck: live input and stage actions -->
-        <Grid VerticalAlignment="Bottom" Margin="28,0,24,22">
+        <Grid VerticalAlignment="Bottom" Margin="18,0,16,14">
           <Grid.ColumnDefinitions>
             <ColumnDefinition />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <StackPanel VerticalAlignment="Bottom">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+          <StackPanel VerticalAlignment="Bottom" Margin="0,0,12,0">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
               <Ellipse x:Name="LiveDot" Width="6" Height="6" Fill="#3A3C42" VerticalAlignment="Center" Margin="0,0,7,0" />
               <TextBlock x:Name="LiveHint" Text="实时输入" Style="{StaticResource Overline}" />
             </StackPanel>
-            <Grid MinHeight="30">
-              <TextBlock x:Name="RawText" Text="连接手柄后查看实时输入" Foreground="{StaticResource Muted}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Grid MinHeight="28">
+              <TextBlock x:Name="RawText" Text="连接手柄后查看实时输入" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
               <ItemsControl x:Name="LiveChips" VerticalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
@@ -685,8 +655,8 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <Border Background="#1A2A27" BorderBrush="#2F4A44" BorderThickness="1" CornerRadius="7" Padding="10,4" Margin="0,0,6,4">
-                      <TextBlock Text="{Binding}" Foreground="#9FD6C6" FontSize="12.5" FontWeight="SemiBold" />
+                    <Border Background="#1A2A27" BorderBrush="#2F4A44" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,5,4">
+                      <TextBlock Text="{Binding}" Foreground="#9FD6C6" FontSize="12" FontWeight="SemiBold" />
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -694,112 +664,59 @@
             </Grid>
           </StackPanel>
           <StackPanel x:Name="StageActions" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-            <Button x:Name="LocateButton" Content="按键定位" Margin="0,0,10,0" Background="#AA111215" ToolTip="按下一个实体键，直接定位到它的映射" />
-            <Button x:Name="WizardButton" Content="全按键校准" Style="{StaticResource Primary}" Padding="20,0" ToolTip="逐个对准所有实体按键" />
+            <Button x:Name="LocateButton" Content="按键定位" Margin="0,0,8,0" Background="#AA111215" ToolTip="按下一个实体键，直接定位到它的映射" />
+            <Button x:Name="WizardButton" Content="全按键校准" Style="{StaticResource Primary}" Padding="16,0" ToolTip="逐个对准所有实体按键" />
           </StackPanel>
         </Grid>
       </Grid>
 
       <!-- Inspector -->
-      <Border Grid.Column="1" Background="{StaticResource Panel}" BorderBrush="{StaticResource Hairline}" BorderThickness="1,1,0,0" CornerRadius="14,0,0,0">
+      <Border Grid.Column="1" Background="{StaticResource Panel}" BorderBrush="{StaticResource Hairline}" BorderThickness="1,1,0,0" CornerRadius="12,0,0,0">
         <TabControl x:Name="InspectorTabs">
 
-          <!-- Mapping -->
+          <!-- ── Mapping: source → list → selected-key editor ── -->
           <TabItem Header="按键映射">
             <Grid>
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
-              <!-- Selected key editor -->
-              <StackPanel Margin="24,22,24,0">
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
-                  </Grid.ColumnDefinitions>
-                  <Border Width="60" Height="60" CornerRadius="12" Background="{StaticResource Raised}" BorderBrush="{StaticResource HairlineStrong}" BorderThickness="1">
-                    <Viewbox Margin="10" StretchDirection="DownOnly">
-                      <TextBlock x:Name="SelectedGlyph" Text="—" FontFamily="{StaticResource Display}" FontSize="26" Foreground="{StaticResource Paper}" />
-                    </Viewbox>
-                  </Border>
-                  <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="SelectedText" Text="选择一个按键" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource Paper}" TextTrimming="CharacterEllipsis" />
-                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                      <TextBlock x:Name="SelectedRaw" Text="点选模型、列表，或直接按下实体键" FontSize="11.5" Foreground="{StaticResource Faint}" />
-                      <TextBlock x:Name="LockHint" Text="" Foreground="{StaticResource Amber}" FontSize="11" Margin="10,0,0,0" />
-                    </StackPanel>
-                  </StackPanel>
-                </Grid>
-
-                <TextBlock Text="输出" Style="{StaticResource Overline}" Margin="0,20,0,8" />
-                <ListBox x:Name="TargetCombo" Style="{StaticResource Segmented}" SelectedIndex="0" FontSize="12.5">
-                  <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <UniformGrid Rows="2" Columns="3" />
-                    </ItemsPanelTemplate>
-                  </ListBox.ItemsPanel>
-                  <ListBoxItem Content="未分配" />
-                  <ListBoxItem Content="鼠标左键" />
-                  <ListBoxItem Content="鼠标右键" />
-                  <ListBoxItem Content="键盘" ToolTip="按住保持按下，松开弹起；可用多个实体键分别按住修饰键和点按其他键" />
-                  <ListBoxItem Content="媒体键" ToolTip="音量、静音、播放 / 暂停、上一曲、下一曲等" />
-                  <ListBoxItem Content="按键序列" ToolTip="按下时依次点按一组按键，例如 HOG 热键 JFQR" />
-                </ListBox>
-                <Button x:Name="KeyButton" Content="录入键盘键 / 组合键" IsEnabled="False" Visibility="Collapsed" Margin="0,10,0,0" HorizontalContentAlignment="Left" Background="{StaticResource Well}" />
-                <ComboBox x:Name="MediaCombo" Visibility="Collapsed" Margin="0,10,0,0" MaxDropDownHeight="280" ToolTip="音量键长按时按“移动设置”中的重复间隔连续调节" />
-                <Button x:Name="SequenceButton" Content="设置按键序列 / HOG 热键" Visibility="Collapsed" Margin="0,10,0,0" HorizontalContentAlignment="Left" Background="{StaticResource Well}" />
-
-                <Grid Margin="0,14,0,0">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <Expander Header="重命名实体键" FontSize="12" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                      <TextBox x:Name="PhysicalNameBox" Width="150" ToolTip="自定义实体按键名称" />
-                      <Button x:Name="RenameButton" Content="确认" Margin="8,0,0,0" Padding="14,0" />
-                    </StackPanel>
-                  </Expander>
-                  <Button x:Name="ApplyButton" Grid.Column="1" Content="应用" Style="{StaticResource Primary}" Padding="26,0" VerticalAlignment="Top" />
-                </Grid>
-
-                <TextBlock x:Name="GuideText" Text="点选模型或列表中的按键，设置对应输出。" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,0" LineHeight="19" />
-              </StackPanel>
-
-              <!-- List header -->
-              <StackPanel Grid.Row="1" Margin="24,18,24,8">
-                <ListBox x:Name="SourceTabs" Style="{StaticResource Segmented}" SelectedIndex="0" FontSize="12" Margin="0,0,0,12">
+              <!-- Level 1: which input source, how many are set, source actions -->
+              <Grid Margin="16,12,16,6">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <ListBox x:Name="SourceTabs" Style="{StaticResource Segmented}" SelectedIndex="0" FontSize="12">
                   <ListBoxItem Content="手柄" />
                   <ListBoxItem Content="遥控 / 蓝牙外设" ToolTip="红外接收器、蓝牙遥控器、翻页笔等以键盘或媒体键形式出现的设备" />
                 </ListBox>
-                <Grid>
-                  <TextBlock Text="全部输入" Style="{StaticResource Overline}" VerticalAlignment="Center" />
+                <Grid Grid.Row="1" Margin="2,8,0,0" MinHeight="24">
+                  <TextBlock x:Name="MapCountText" Text="" Style="{StaticResource Overline}" VerticalAlignment="Center" />
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock x:Name="MapCountText" Text="" Style="{StaticResource Overline}" VerticalAlignment="Center" />
-                    <Button x:Name="RemoveButton" Content="移除" Visibility="Collapsed" MinHeight="26" Height="26" Padding="12,0" FontSize="12" Margin="10,0,0,0" />
-                    <Button x:Name="LearnButton" Content="学习按键" Visibility="Collapsed" MinHeight="26" Height="26" Padding="12,0" FontSize="12" Margin="8,0,0,0" Style="{StaticResource Primary}" />
+                    <Button x:Name="RemoveButton" Content="移除" Visibility="Collapsed" MinHeight="24" Height="24" Padding="10,0" FontSize="11.5" ToolTip="从列表中移除选中的外设按键" />
+                    <Button x:Name="LearnButton" Content="+ 学习按键" Visibility="Collapsed" MinHeight="24" Height="24" Padding="10,0" FontSize="11.5" Margin="6,0,0,0" Style="{StaticResource Primary}" ToolTip="按下遥控器或蓝牙外设上的键，把它加入列表" />
                   </StackPanel>
                 </Grid>
-              </StackPanel>
+              </Grid>
 
-              <DataGrid x:Name="MappingGrid" Grid.Row="2" Margin="12,0,8,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="None" GridLinesVisibility="None" RowHeaderWidth="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MinHeight="150" RowHeight="50">
+              <!-- Level 2: every input of that source -->
+              <DataGrid x:Name="MappingGrid" Grid.Row="1" Margin="8,0,6,6" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="None" GridLinesVisibility="None" RowHeaderWidth="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MinHeight="96" RowHeight="40">
                 <DataGrid.Columns>
                   <DataGridTemplateColumn Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>
-                        <Grid Margin="16,0,8,0">
+                        <Grid Margin="12,0,6,0">
                           <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition />
                           </Grid.ColumnDefinitions>
                           <Ellipse x:Name="dot" Width="6" Height="6" Fill="#34363D" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                          <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Physical}" FontSize="13.5" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding Raw}" FontSize="11" Foreground="#66625C" Margin="0,2,0,0" />
-                          </StackPanel>
+                          <TextBlock Grid.Column="1" Text="{Binding Physical}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="150" />
+                          <TextBlock Grid.Column="2" Text="{Binding Raw}" FontSize="10.5" Foreground="#66625C" VerticalAlignment="Center" Margin="8,1,0,0" TextTrimming="CharacterEllipsis" />
                         </Grid>
                         <DataTemplate.Triggers>
                           <DataTrigger Binding="{Binding Verification}" Value="已对准">
@@ -818,8 +735,8 @@
                   <DataGridTemplateColumn Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>
-                        <Border x:Name="pill" HorizontalAlignment="Right" Margin="0,0,14,0" CornerRadius="6" Padding="9,4" Background="#24262C">
-                          <TextBlock x:Name="label" Text="{Binding OutputLabel}" FontSize="12" Foreground="#DCD6CB" />
+                        <Border x:Name="pill" HorizontalAlignment="Right" Margin="0,0,10,0" CornerRadius="5" Padding="8,3" Background="#24262C" MaxWidth="150">
+                          <TextBlock x:Name="label" Text="{Binding OutputLabel}" FontSize="11.5" Foreground="#DCD6CB" TextTrimming="CharacterEllipsis" />
                         </Border>
                         <DataTemplate.Triggers>
                           <DataTrigger Binding="{Binding OutputLabel}" Value="未分配">
@@ -836,125 +753,192 @@
                   </DataGridTemplateColumn>
                 </DataGrid.Columns>
               </DataGrid>
+
+              <!-- Level 3: the selected key; output choices take effect immediately -->
+              <Border Grid.Row="2" Background="#1A1B20" BorderBrush="{StaticResource Hairline}" BorderThickness="0,1,0,0" Padding="16,12,16,12">
+                <StackPanel>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="40" Height="40" CornerRadius="9" Background="{StaticResource Raised}" BorderBrush="{StaticResource HairlineStrong}" BorderThickness="1">
+                      <Viewbox Margin="7" StretchDirection="DownOnly">
+                        <TextBlock x:Name="SelectedGlyph" Text="—" FontFamily="{StaticResource Display}" FontSize="19" Foreground="{StaticResource Paper}" />
+                      </Viewbox>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,6,0" VerticalAlignment="Center">
+                      <TextBlock x:Name="SelectedText" Text="选择一个按键" FontFamily="{StaticResource SerifCn}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource Paper}" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                        <TextBlock x:Name="SelectedRaw" Text="点选模型、列表，或直接按下实体键" FontSize="11" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="LockHint" Text="" Foreground="{StaticResource Amber}" FontSize="11" Margin="8,0,0,0" />
+                      </StackPanel>
+                    </StackPanel>
+                    <Button x:Name="RenameToggle" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE70F;" VerticalAlignment="Center" ToolTip="重命名实体键" IsEnabled="False" />
+                  </Grid>
+
+                  <Grid x:Name="RenamePanel" Visibility="Collapsed" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="PhysicalNameBox" ToolTip="自定义实体按键名称；回车确认，Esc 取消" />
+                    <Button x:Name="RenameButton" Grid.Column="1" Content="确认" Margin="6,0,0,0" Padding="12,0" />
+                  </Grid>
+
+                  <TextBlock Text="输出 · 点选即生效" Style="{StaticResource Overline}" Margin="0,12,0,6" />
+                  <ListBox x:Name="TargetCombo" Style="{StaticResource Segmented}" SelectedIndex="0" FontSize="12">
+                    <ListBox.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Rows="2" Columns="3" />
+                      </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBoxItem Content="未分配" />
+                    <ListBoxItem Content="鼠标左键" />
+                    <ListBoxItem Content="鼠标右键" />
+                    <ListBoxItem Content="键盘" ToolTip="按住保持按下，松开弹起；可用多个实体键分别按住修饰键和点按其他键" />
+                    <ListBoxItem Content="媒体键" ToolTip="音量、静音、播放 / 暂停、上一曲、下一曲等" />
+                    <ListBoxItem Content="按键序列" ToolTip="按下时依次点按一组按键，例如 HOG 热键 JFQR" />
+                  </ListBox>
+                  <Button x:Name="KeyButton" Content="录入键盘键 / 组合键" IsEnabled="False" Visibility="Collapsed" Margin="0,8,0,0" HorizontalContentAlignment="Left" Background="{StaticResource Well}" ToolTip="点击重新录入" />
+                  <ComboBox x:Name="MediaCombo" Visibility="Collapsed" Margin="0,8,0,0" MaxDropDownHeight="280" ToolTip="音量键长按时按“移动设置”中的长按重复连续调节" />
+                  <Button x:Name="SequenceButton" Content="设置按键序列 / HOG 热键" Visibility="Collapsed" Margin="0,8,0,0" HorizontalContentAlignment="Left" Background="{StaticResource Well}" ToolTip="点击修改序列" />
+
+                  <TextBlock x:Name="GuideText" Text="点选模型或列表中的按键，再点选输出。" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="0,10,0,0" LineHeight="17" MaxHeight="34" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Border>
             </Grid>
           </TabItem>
 
-          <!-- Movement -->
+          <!-- ── Movement: left stick, then D-pad ── -->
           <TabItem Header="移动设置">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-              <StackPanel Margin="24,22,24,24">
+              <StackPanel Margin="18,14,18,18">
 
                 <!-- Left stick -->
                 <Grid>
                   <StackPanel>
-                    <TextBlock Text="左摇杆" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" />
-                    <TextBlock Text="连续移动 · 轻推微调，推远加速" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,0,0" />
+                    <TextBlock Text="左摇杆" FontFamily="{StaticResource SerifCn}" FontSize="15" FontWeight="SemiBold" />
+                    <TextBlock Text="连续移动 · 轻推微调，推远加速" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0" />
                   </StackPanel>
-                  <CheckBox x:Name="StickEnabled" Style="{StaticResource Switch}" IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0" ToolTip="启用左摇杆移动鼠标" />
+                  <CheckBox x:Name="StickEnabled" Style="{StaticResource Switch}" IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="启用左摇杆移动鼠标" />
                 </Grid>
 
-                <Grid Margin="0,24,0,0">
-                  <TextBlock Text="最高速度" Foreground="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock x:Name="SpeedText" Text="800" FontFamily="{StaticResource Display}" FontSize="24" Foreground="{StaticResource Paper}" />
-                    <TextBlock Text="px/s" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Bottom" Margin="6,0,0,5" />
-                  </StackPanel>
-                </Grid>
-                <Slider x:Name="SpeedSlider" Minimum="100" Maximum="2400" TickFrequency="50" IsSnapToTickEnabled="True" Value="800" Margin="0,6,0,0" />
-
-                <Grid Margin="0,20,0,0">
-                  <TextBlock Text="回中死区" Foreground="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock x:Name="DeadzoneText" Text="16" FontFamily="{StaticResource Display}" FontSize="24" Foreground="{StaticResource Paper}" />
-                    <TextBlock Text="%" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Bottom" Margin="5,0,0,5" />
-                  </StackPanel>
-                </Grid>
-                <Slider x:Name="DeadzoneSlider" Minimum="5" Maximum="45" TickFrequency="1" IsSnapToTickEnabled="True" Value="16" Margin="0,6,0,0" />
-
-                <TextBlock Text="操控曲线" Foreground="{StaticResource Muted}" Margin="0,22,0,10" />
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="96" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition />
-                  </Grid.ColumnDefinitions>
-                  <!-- Response curve preview -->
-                  <Border Height="96" CornerRadius="10" Background="{StaticResource Well}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" ClipToBounds="True">
-                    <Grid Margin="12">
-                      <Path Data="M0,72 L72,0" Stroke="#2A2C32" StrokeThickness="1" StrokeDashArray="3 3" Stretch="None" />
-                      <Path x:Name="CurvePath" Stroke="{StaticResource Vermilion}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None" />
+                <Border Background="{StaticResource Well}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,12,0,0">
+                  <StackPanel>
+                    <Grid>
+                      <TextBlock Text="最高速度" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock x:Name="SpeedText" Text="800" FontFamily="{StaticResource Display}" FontSize="16" Foreground="{StaticResource Paper}" />
+                        <TextBlock Text="px/s" Foreground="{StaticResource Faint}" FontSize="10.5" VerticalAlignment="Bottom" Margin="5,0,0,2" />
+                      </StackPanel>
                     </Grid>
-                  </Border>
-                  <ListBox x:Name="CurveCombo" Grid.Column="2" SelectedIndex="1" VerticalAlignment="Center" FontSize="12.5" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                    <ListBox.Template>
-                      <ControlTemplate TargetType="ListBox">
-                        <ItemsPresenter />
-                      </ControlTemplate>
-                    </ListBox.Template>
-                    <ListBox.ItemContainerStyle>
-                      <Style TargetType="ListBoxItem">
-                        <Setter Property="Foreground" Value="#9C968C" />
-                        <Setter Property="Cursor" Value="Hand" />
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                        <Setter Property="Template">
-                          <Setter.Value>
-                            <ControlTemplate TargetType="ListBoxItem">
-                              <Border x:Name="b" CornerRadius="7" Padding="12,0" Height="30" Margin="0,0,0,2" Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                                <ContentPresenter VerticalAlignment="Center" />
-                              </Border>
-                              <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                  <Setter Property="Foreground" Value="#D8D2C7" />
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                  <Setter TargetName="b" Property="Background" Value="#22242A" />
-                                  <Setter TargetName="b" Property="BorderBrush" Value="#34363D" />
-                                  <Setter Property="Foreground" Value="#F3EEE5" />
-                                </Trigger>
-                              </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                          </Setter.Value>
-                        </Setter>
-                      </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBoxItem Content="线性 · 均匀" />
-                    <ListBoxItem Content="渐进 · 精细" />
-                    <ListBoxItem Content="柔和 · 微调" />
-                  </ListBox>
-                </Grid>
+                    <Slider x:Name="SpeedSlider" Minimum="100" Maximum="2400" TickFrequency="50" IsSnapToTickEnabled="True" Value="800" Margin="0,4,0,0" SmallChange="50" LargeChange="100" />
 
-                <Button x:Name="StickCalibrateButton" Content="校准左摇杆方向与中心" Margin="0,20,0,0" />
+                    <Grid Margin="0,10,0,0">
+                      <TextBlock Text="回中死区" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock x:Name="DeadzoneText" Text="16" FontFamily="{StaticResource Display}" FontSize="16" Foreground="{StaticResource Paper}" />
+                        <TextBlock Text="%" Foreground="{StaticResource Faint}" FontSize="10.5" VerticalAlignment="Bottom" Margin="4,0,0,2" />
+                      </StackPanel>
+                    </Grid>
+                    <Slider x:Name="DeadzoneSlider" Minimum="5" Maximum="45" TickFrequency="1" IsSnapToTickEnabled="True" Value="16" Margin="0,4,0,0" SmallChange="1" LargeChange="5" />
 
-                <Border Height="1" Background="{StaticResource Hairline}" Margin="0,28" />
+                    <Grid Margin="0,12,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="56" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition />
+                      </Grid.ColumnDefinitions>
+                      <!-- Response curve preview (drawn in a 72 x 72 box, scaled down) -->
+                      <Border Height="56" CornerRadius="8" Background="{StaticResource Ink}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" ClipToBounds="True">
+                        <Viewbox Margin="8">
+                          <Grid Width="72" Height="72">
+                            <Path Data="M0,72 L72,0" Stroke="#2A2C32" StrokeThickness="1.5" StrokeDashArray="3 3" Stretch="None" />
+                            <Path x:Name="CurvePath" Stroke="{StaticResource Vermilion}" StrokeThickness="3" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None" />
+                          </Grid>
+                        </Viewbox>
+                      </Border>
+                      <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="操控曲线" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,6" />
+                        <ListBox x:Name="CurveCombo" Style="{StaticResource Segmented}" SelectedIndex="1" FontSize="12">
+                          <ListBoxItem Content="线性" ToolTip="推多少走多少，速度均匀" />
+                          <ListBoxItem Content="渐进" ToolTip="轻推更精细，推到底加速" />
+                          <ListBoxItem Content="柔和" ToolTip="大部分行程都很慢，适合精确微调" />
+                        </ListBox>
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+
+                <Button x:Name="StickCalibrateButton" Content="校准左摇杆方向与中心" Margin="0,10,0,0" HorizontalAlignment="Left" FontSize="12" />
+
+                <Border Height="1" Background="{StaticResource Hairline}" Margin="0,18" />
 
                 <!-- D-pad -->
-                <TextBlock Text="方向键" FontFamily="{StaticResource SerifCn}" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="步进移动 · 每按一次移动的物理像素" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,0,18" />
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition />
-                  </Grid.ColumnDefinitions>
+                <TextBlock Text="方向键" FontFamily="{StaticResource SerifCn}" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="步进移动 · 每按一次移动的物理像素" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0" />
+
+                <Border Background="{StaticResource Well}" BorderBrush="{StaticResource Hairline}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,12,0,0">
                   <StackPanel>
-                    <TextBlock Text="水平  ←  →" Style="{StaticResource Overline}" Margin="0,0,0,7" />
                     <Grid>
-                      <TextBox x:Name="HorizontalStepBox" Text="30" FontFamily="{StaticResource Mono}" FontSize="14" Padding="12,0,36,0" />
-                      <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" IsHitTestVisible="False" />
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="水平  ←  →" Style="{StaticResource Overline}" Margin="0,0,0,5" />
+                        <Grid>
+                          <TextBox x:Name="HorizontalStepBox" Text="30" FontFamily="{StaticResource Mono}" FontSize="13" Padding="10,0,32,0" Background="{StaticResource Ink}" />
+                          <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" IsHitTestVisible="False" />
+                        </Grid>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="垂直  ↑  ↓" Style="{StaticResource Overline}" Margin="0,0,0,5" />
+                        <Grid>
+                          <TextBox x:Name="VerticalStepBox" Text="20" FontFamily="{StaticResource Mono}" FontSize="13" Padding="10,0,32,0" Background="{StaticResource Ink}" />
+                          <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" IsHitTestVisible="False" />
+                        </Grid>
+                      </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                      <StackPanel>
+                        <TextBlock Text="长按连续移动" Foreground="{StaticResource Muted}" FontSize="12" />
+                        <TextBlock Text="音量键长按时同样按此连续调节" Foreground="{StaticResource Faint}" FontSize="10.5" Margin="0,2,0,0" />
+                      </StackPanel>
+                      <CheckBox x:Name="RepeatEnabled" Style="{StaticResource Switch}" IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="按住方向键或音量键时连续触发" />
+                    </Grid>
+                    <Grid x:Name="RepeatFields" Margin="0,8,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="首次延迟" Style="{StaticResource Overline}" Margin="0,0,0,5" />
+                        <Grid>
+                          <TextBox x:Name="RepeatDelayBox" Text="350" FontFamily="{StaticResource Mono}" FontSize="13" Padding="10,0,32,0" Background="{StaticResource Ink}" ToolTip="100–5000 ms" />
+                          <TextBlock Text="ms" Foreground="{StaticResource Faint}" FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" IsHitTestVisible="False" />
+                        </Grid>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="重复间隔" Style="{StaticResource Overline}" Margin="0,0,0,5" />
+                        <Grid>
+                          <TextBox x:Name="RepeatIntervalBox" Text="90" FontFamily="{StaticResource Mono}" FontSize="13" Padding="10,0,32,0" Background="{StaticResource Ink}" ToolTip="30–5000 ms" />
+                          <TextBlock Text="ms" Foreground="{StaticResource Faint}" FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" IsHitTestVisible="False" />
+                        </Grid>
+                      </StackPanel>
                     </Grid>
                   </StackPanel>
-                  <StackPanel Grid.Column="2">
-                    <TextBlock Text="垂直  ↑  ↓" Style="{StaticResource Overline}" Margin="0,0,0,7" />
-                    <Grid>
-                      <TextBox x:Name="VerticalStepBox" Text="20" FontFamily="{StaticResource Mono}" FontSize="14" Padding="12,0,36,0" />
-                      <TextBlock Text="px" Foreground="{StaticResource Faint}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" IsHitTestVisible="False" />
-                    </Grid>
-                  </StackPanel>
-                </Grid>
-                <TextBlock x:Name="DpadError" Foreground="#E5664A" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0" />
-                <Grid Margin="0,8,0,0">
-                  <TextBlock x:Name="DpadText" Foreground="{StaticResource Faint}" TextWrapping="Wrap" FontSize="11.5" LineHeight="18" VerticalAlignment="Center" Margin="0,0,12,0" />
-                  <Button x:Name="DpadApplyButton" Content="应用步长" HorizontalAlignment="Right" />
+                </Border>
+
+                <TextBlock x:Name="DpadError" Foreground="#E5664A" TextWrapping="Wrap" FontSize="11.5" Margin="0,6,0,0" />
+                <Grid Margin="0,4,0,0">
+                  <TextBlock x:Name="DpadText" Foreground="{StaticResource Faint}" TextWrapping="Wrap" FontSize="11" LineHeight="16" VerticalAlignment="Center" Margin="0,0,96,0" />
+                  <Button x:Name="DpadApplyButton" Content="应用" Style="{StaticResource Primary}" Padding="18,0" HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="保存步长与长按设置（输入框内回车也可保存）" />
                 </Grid>
               </StackPanel>
             </ScrollViewer>
@@ -964,15 +948,17 @@
     </Grid>
 
     <!-- ═══ Status line ═══ -->
-    <Grid Grid.Row="2" Margin="22,0,22,0">
-      <TextBlock x:Name="FooterText" Text="配置保存在本机" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,320,0" />
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-        <TextBlock Text="按下与弹起同步" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" />
-        <Border Width="1" Height="10" Background="{StaticResource HairlineStrong}" Margin="12,0" />
-        <Border Style="{StaticResource Kbd}"><TextBlock Text="Ctrl" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
-        <Border Style="{StaticResource Kbd}"><TextBlock Text="Alt" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
-        <Border Style="{StaticResource Kbd}"><TextBlock Text="F12" FontFamily="{StaticResource Mono}" FontSize="10.5" Foreground="{StaticResource Muted}" /></Border>
-        <TextBlock Text="暂停 / 恢复" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" Margin="4,0,0,0" />
+    <Grid Grid.Row="2" Margin="16,0,16,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <TextBlock x:Name="FooterText" Text="配置保存在本机" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="Ctrl" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}" /></Border>
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="Alt" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}" /></Border>
+        <Border Style="{StaticResource Kbd}"><TextBlock Text="F12" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}" /></Border>
+        <TextBlock Text="暂停 / 恢复" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0" />
       </StackPanel>
     </Grid>
   </Grid>
