@@ -23,7 +23,7 @@ namespace PadDesk {
             }
         }
         public static string KeyFor(Mapping mapping) {
-            if(mapping==null || mapping.Reserved)return null;
+            if(mapping==null || mapping.Reserved || mapping.Input!=null && mapping.Input.Kind=="Remote")return null;
             return mapping.Locked?Key(mapping.Target):mapping.Confirmed?Key(mapping.Name):null;
         }
         public static string Caption(string key,string layout) {

@@ -9,7 +9,7 @@ $model = Join-Path $PSScriptRoot 'Model.cs'
 $engine = Join-Path $PSScriptRoot 'Engine.cs'
 $device = Join-Path $PSScriptRoot 'Device.cs'
 $native = Join-Path $PSScriptRoot 'NativeOutput.cs'
-& $compiler /nologo /platform:x64 /r:System.Runtime.Serialization.dll "/out:$testDir\Tests.exe" $model $engine (Join-Path $PSScriptRoot 'ControllerLayout.cs') (Join-Path $PSScriptRoot 'Tests.cs')
+& $compiler /nologo /platform:x64 /r:System.Runtime.Serialization.dll "/out:$testDir\Tests.exe" $model $engine $device (Join-Path $PSScriptRoot 'RemoteInput.cs') (Join-Path $PSScriptRoot 'ControllerLayout.cs') (Join-Path $PSScriptRoot 'Tests.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
 & (Join-Path $testDir 'Tests.exe')
 if ($LASTEXITCODE -ne 0) { throw 'Behavior tests failed' }
