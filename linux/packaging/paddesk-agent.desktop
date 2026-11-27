@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PadDesk 媒体键助手
+Name[en]=PadDesk media key agent
+Comment=把手柄映射的播放 / 暂停、上一曲、下一曲交给媒体播放器（MPRIS）
+Exec=paddesk agent
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

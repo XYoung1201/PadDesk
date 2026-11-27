@@ -4,7 +4,8 @@ set -eu
 [ "$(id -u)" -eq 0 ] || { echo "请用 sudo 运行: sudo $0"; exit 1; }
 systemctl disable --now paddesk 2>/dev/null || true
 rm -f /etc/systemd/system/paddesk.service /etc/udev/rules.d/70-paddesk-uinput.rules /etc/modules-load.d/paddesk.conf
-rm -f /usr/local/bin/paddesk /usr/share/applications/paddesk.desktop
+rm -f /usr/local/bin/paddesk /usr/share/applications/paddesk.desktop /etc/xdg/autostart/paddesk-agent.desktop
+pkill -f "paddesk agent" 2>/dev/null || true
 rm -rf /opt/paddesk
 systemctl daemon-reload
 udevadm control --reload-rules || true

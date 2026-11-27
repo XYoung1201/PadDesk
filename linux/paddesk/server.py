@@ -76,6 +76,11 @@ def make_handler(service):
                 if route == ("GET", "/api/keys"):
                     return self._send(200, {"keys": keys.key_list(), "media": [{"code": c, "name": keys.name(c)} for c in keys.MEDIA],
                                             "modifiers": [{"code": c, "name": keys.name(c)} for c in (29, 56, 42, 125)]})
+                if route == ("GET", "/api/media/wait"):
+                    return self._send(200, service.media_wait(int(q.get("after", -1)), min(25.0, float(q.get("timeout", 20)))))
+                if route == ("POST", "/api/media/fallback"):
+                    service.media_fallback(int(body.get("code", 0)))
+                    return self._send(200, {"ok": True})
                 if route == ("GET", "/api/hog"):
                     return self._send(200, service.hog())
                 if route == ("GET", "/api/settings"):

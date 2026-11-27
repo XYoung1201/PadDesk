@@ -136,6 +136,37 @@ class ServiceTests(unittest.TestCase):
         downs = [t for t, d_ in self.out.log if d_]
         self.assertEqual(downs, ["K:29", "K:36", "K:33"])
 
+    def test_nintendo_layout_names_and_locate(self):
+        d = self.svc.get_profile("pad")
+        d["profile"]["visual_layout"] = "nintendo"
+        d = self.svc.save_profile("pad", d["profile"], d["rev"])
+        names = {m["id"]: m["display"] for m in d["profile"]["mappings"]}
+        self.assertEqual((names["key:%d" % A], names["key:%d" % B]), ("B", "A"))
+        self.svc.start_learn("pad")
+        self.tick()
+        press(self.svc, self.pad, B)  # the east button, printed "A" on Nintendo pads
+        self.assertEqual(self.svc.message, "已识别：A")
+
+    def test_play_pause_goes_to_session_agent(self):
+        self.set_pad_output(A, "media", [164])
+        self.tick()
+        press(self.svc, self.pad, A)
+        press(self.svc, self.pad, A, False)
+        self.assertEqual(self.out.log[-2:], [("K:164", True), ("K:164", False)])  # no agent: plain key
+        first = self.svc.media_wait(-1, timeout=0)
+        self.assertEqual(first["events"], [])
+        self.assertTrue(self.svc.agent_connected())
+        n = len(self.out.log)
+        press(self.svc, self.pad, A)
+        press(self.svc, self.pad, A, False)
+        self.assertEqual(self.out.log[n:], [])  # handed to the agent instead of the desktop
+        got = self.svc.media_wait(first["seq"], timeout=0)
+        self.assertEqual([(e["code"], e["action"]) for e in got["events"]], [(164, "play-pause")])
+        self.svc.media_fallback(164)  # agent found no player
+        self.assertEqual(self.out.log[n:], [("K:164", True), ("K:164", False)])
+        self.clock.t += 60
+        self.assertFalse(self.svc.agent_connected())
+
     def test_stale_revision_rejected(self):
         d = self.svc.get_profile("pad")
         self.svc.save_profile("pad", d["profile"], d["rev"])

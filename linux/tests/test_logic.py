@@ -181,6 +181,32 @@ class ProfileTests(unittest.TestCase):
             q = st.load_profile(p.device_id)
             self.assertEqual(q.to_json(), p.to_json())
 
+    def test_axis_names_say_the_direction(self):
+        axes = {0: 0.0, 1: 0.0, 2: -1.0, 3: 0.0, 4: 0.0, 5: -1.0, 0x10: 0.0, 0x11: 0.0}
+        p = create_profile("pad", "Pad", [A], axes)
+        ids = {m.input.id: m for m in p.mappings}
+        # evdev Y grows downwards: ABS_RY − is pushing the right stick up
+        self.assertEqual(ids["axis:4:-"].name, "右摇杆 ↑")
+        self.assertEqual(ids["axis:4:+"].name, "右摇杆 ↓")
+        self.assertEqual(ids["axis:3:+"].name, "右摇杆 →")
+        self.assertEqual(ids["axis:4:-"].input.caption, "右摇杆 ↑")
+        self.assertEqual(ids["axis:2:+"].name, "L2 / LT")
+        # profiles saved by earlier versions get the ambiguous "右摇杆 Y +" names replaced
+        d = p.to_json()
+        for m in d["mappings"]:
+            if m["input"]["kind"] == "axis" and m["input"]["code"] == 4:
+                m["name"] = "右摇杆 Y +" if m["input"]["direction"] > 0 else "右摇杆 Y −"
+        q = {m.input.id: m for m in Profile.from_json(d).mappings}
+        self.assertEqual((q["axis:4:-"].name, q["axis:4:+"].name), ("右摇杆 ↑", "右摇杆 ↓"))
+
+    def test_face_names_follow_layout(self):
+        p = create_profile("pad", "Pad", [A, B, 0x133, 0x134], {})
+        m = {x.input.id: x for x in p.mappings}
+        self.assertEqual([m["key:%d" % c].display_name("xbox") for c in (A, B, 0x133, 0x134)], ["A", "B", "Y", "X"])
+        self.assertEqual([m["key:%d" % c].display_name("nintendo") for c in (A, B, 0x133, 0x134)], ["B", "A", "X", "Y"])
+        m["key:%d" % B].name = "跳跃"
+        self.assertEqual(m["key:%d" % B].display_name("nintendo"), "跳跃")
+
     def test_validation(self):
         p = profile()
         p.mappings = [Mapping(Source("key", A), target="keyboard", codes=[])]
