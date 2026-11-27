@@ -51,12 +51,7 @@ class Source:
         if self.kind == "remote":
             return "按键 %s · %s" % (keys.name(self.code), self.device_name or "外设")
         if self.kind == "axis":
-            base = keys.AXIS_LABELS.get(self.code, "轴 %d" % self.code)
-            if self.code in (0x10, 0x12):
-                return "方向帽 " + ("→" if self.direction > 0 else "←")
-            if self.code in (0x11, 0x13):
-                return "方向帽 " + ("↓" if self.direction > 0 else "↑")
-            return base + (" +" if self.direction > 0 else " −")
+            return keys.axis_caption(self.code, self.direction)
         for nm, code in keys.BTN.items():
             if code == self.code:
                 return "按钮 BTN_" + nm
@@ -102,6 +97,15 @@ class Mapping:
     @property
     def physical(self):
         return self.name or self.input.caption
+
+    def display_name(self, layout="xbox"):
+        """Name shown in the UI. Face buttons that still carry a default letter follow the chosen layout,
+        so with the Nintendo layout the east button (BTN_EAST) reads "A" everywhere, as on the drawing."""
+        s = self.input
+        if s.kind == "key" and s.code in keys.FACE_LABELS["xbox"]:
+            if self.name in ("", keys.FACE_LABELS["xbox"][s.code], keys.FACE_LABELS["nintendo"][s.code]):
+                return keys.button_label(s.code, layout)
+        return self.physical
 
     @property
     def output_label(self):
@@ -321,6 +325,9 @@ class Profile:
             if k in d:
                 setattr(p, k, int(d[k]))
         p.mappings = [Mapping.from_json(m) for m in d.get("mappings") or []]
+        for m in p.mappings:  # rename the ambiguous "右摇杆 Y +" style defaults of earlier versions
+            if m.input.kind == "axis" and m.name and m.name == keys.legacy_axis_name(m.input.code, m.input.direction):
+                m.name = keys.axis_caption(m.input.code, m.input.direction)
         return p
 
     def find(self, source_id):

@@ -76,7 +76,7 @@ function h(tag, attrs = {}, ...kids) {
   for (const k of kids.flat()) if (k != null) el.append(k.nodeType ? k : document.createTextNode(k));
   return el;
 }
-const physical = m => m.name || m.caption;
+const physical = m => m.display || m.name || m.caption;
 const clone = o => JSON.parse(JSON.stringify(o));
 
 // ---- profiles ------------------------------------------------------------------------------
@@ -115,22 +115,27 @@ async function saveProfile(scope, mutate, okText) {
 // ---- mapping list and editor -------------------------------------------------------------
 
 function renderList(scope) {
-  const box = $("#list-" + scope); box.textContent = "";
+  const box = $("#list-" + scope), keep = box.scrollTop;
+  // re-rendering after a save must not jump back to the top: hold the height while rebuilding
+  const hold = h("div", { style: "height:" + box.scrollHeight + "px" });
+  box.textContent = ""; box.append(hold);
   const p = S.prof[scope];
   const count = $(scope === "pad" ? "#padCount" : "#remoteCount");
-  if (!p) { box.append(h("p", { class: "muted" }, "没有连接手柄。连接后会自动出现，蓝牙手柄请先在系统蓝牙设置中配对。")); count.textContent = ""; return; }
+  if (!p) { hold.remove(); box.append(h("p", { class: "muted" }, "没有连接手柄。连接后会自动出现，蓝牙手柄请先在系统蓝牙设置中配对。")); count.textContent = ""; return; }
   if (!p.mappings.length) box.append(h("p", { class: "muted" }, scope === "remote"
     ? "点击“学习按键”，再按遥控器、蓝牙遥控器、翻页笔或电视遥控器（HDMI-CEC）上的键，把它加入列表后设置输出。"
     : "这个手柄没有报告任何按键。"));
   for (const m of p.mappings) {
     const st = scope === "remote" ? (m.target === "none" ? "未设置" : "已设置") : m.locked ? "固定" : m.confirmed ? "已对准" : "待确认";
-    box.append(h("div", { class: "item" + (m.id === S.sel[scope] ? " sel" : ""), "data-id": m.id, onclick: () => select(scope, m.id) },
+    box.append(h("div", { class: "item" + (m.id === S.sel[scope] ? " sel" : ""), "data-id": m.id, onclick: () => select(scope, m.id),
+      ondblclick: () => { select(scope, m.id); quickMap(scope, m.id); } },
       h("div", {}, h("div", { class: "nm" }, physical(m)), h("div", { class: "raw" }, m.caption)),
       h("div", {}, h("div", { class: "out" }, m.output_label), h("div", { class: "st" + (st === "已对准" || st === "已设置" ? " ok" : "") }, st))));
   }
   if (scope === "pad") count.textContent = p.mappings.filter(m => m.confirmed && !m.locked).length + " / " + p.mappings.length + " 已对准";
   else count.textContent = p.mappings.filter(m => m.target !== "none").length + " / " + p.mappings.length + " 已设置";
   $("#removeBtn").disabled = !(scope === "remote" && S.sel.remote);
+  hold.remove(); box.scrollTop = keep;
 }
 
 function select(scope, id) {
@@ -147,7 +152,7 @@ function renderEditor(scope) {
   const m = p && p.mappings.find(x => x.id === S.sel[scope]);
   if (!m) { box.hidden = true; return; }
   box.hidden = false;
-  const name = h("input", { value: m.name, placeholder: m.caption, maxlength: 40 });
+  const name = h("input", { value: m.name ? physical(m) : "", placeholder: m.caption, maxlength: 40 });
   const target = h("select", {}, TARGETS.filter(([v]) => scope === "pad" || !STEP.has(v)).map(([v, t]) => h("option", { value: v, selected: v === m.target }, t)));
   const extra = h("div", { class: "editor-extra" });
   const fields = {};
@@ -190,8 +195,10 @@ function renderEditor(scope) {
   target.onchange = drawExtra;
   drawExtra();
   const apply = h("button", { onclick: () => applyEdit(scope, m.id, name.value.trim(), target.value, fields) }, "应用");
+  const quick = h("button", { class: "ghost", title: "5 秒内按下键盘按键或鼠标按键，自动设为这个键的输出（也可双击列表中的键）",
+    onclick: () => quickMap(scope, m.id) }, "快速映射");
   box.append(h("div", { class: "title" }, h("b", {}, physical(m)), h("span", {}, m.caption)),
-    h("div", { class: "row" }, name, target), extra, h("div", { class: "row" }, h("span", { class: "muted" }, m.locked ? "方向键默认用于步进移动，也可以改成其他输出。" : ""), apply));
+    h("div", { class: "row" }, name, target), extra, h("div", { class: "row" }, h("span", { class: "muted" }, m.locked ? "方向键默认用于步进移动，也可以改成其他输出。" : ""), quick, apply));
 }
 
 function applyEdit(scope, id, name, target, f) {
@@ -240,6 +247,80 @@ function stopRecording() {
   api("POST", "/api/suspend", { on: false }).catch(() => {});
 }
 
+// ---- quick map: the next keyboard key or mouse button within 5 seconds becomes the output ---------
+
+// KeyboardEvent.code of media / browser keys -> Linux key code (all offered by the "媒体键" output)
+const MEDIAMAP = { AudioVolumeUp: 115, AudioVolumeDown: 114, AudioVolumeMute: 113, MediaPlayPause: 164,
+  MediaTrackNext: 163, MediaTrackPrevious: 165, MediaStop: 166, BrowserBack: 158, BrowserForward: 159,
+  BrowserRefresh: 173, BrowserHome: 172 };
+const MODKEYS = new Set([29, 97, 42, 54, 56, 100, 125, 126]);
+const QUICK_SECONDS = 5;
+
+function quickMap(scope, id) {
+  const p = S.prof[scope], m = p && p.mappings.find(x => x.id === id);
+  if (!m || S.quick) return;
+  stopRecording();
+  api("POST", "/api/suspend", { on: true }).catch(() => {});
+  const ov = $("#quickOverlay"), cancel = $("#quickCancel");
+  $("#quickTitle").textContent = "为“" + physical(m) + "”快速映射";
+  let left = QUICK_SECONDS, pendingMods = null;
+  const tick = () => { $("#quickText").textContent = "请按下一个键盘按键（可带 Ctrl / Alt / Shift / Super）或鼠标按键 · 剩余 " + left + " 秒"; };
+  tick(); ov.hidden = false;
+  const heldMods = e => [[29, e.ctrlKey], [56, e.altKey], [42, e.shiftKey], [125, e.metaKey]].filter(x => x[1]).map(x => x[0]);
+  const done = (result) => {
+    finish();
+    if (!result) { footer("未检测到按键，映射没有改变。"); return; }
+    saveProfile(scope, q => {
+      const x = q.mappings.find(y => y.id === id); if (!x) return;
+      x.target = result.target; x.keys = result.keys || []; x.confirmed = true; x.locked = false;
+    }, "已映射：" + physical(m) + " → " + result.label);
+  };
+  const onKeyDown = e => {
+    e.preventDefault(); e.stopPropagation();
+    if (e.repeat) return;
+    if (MEDIAMAP[e.code]) {
+      const c = MEDIAMAP[e.code], k = S.keys && S.keys.media.find(x => x.code === c);
+      return done({ target: "media", keys: [c], label: k ? k.name : e.code });
+    }
+    const code = CODEMAP[e.code];
+    if (!code) return;
+    if (MODKEYS.has(code)) { pendingMods = [...new Set([...heldMods(e), code])]; return; }
+    const keys = [...heldMods(e).filter(c => c !== code), code];
+    done({ target: "keyboard", keys, label: keyLabel(keys) });
+  };
+  const onKeyUp = e => {
+    e.preventDefault(); e.stopPropagation();
+    // a modifier pressed and released on its own maps to that modifier (or the modifiers held together)
+    if (pendingMods && MODKEYS.has(CODEMAP[e.code])) done({ target: "keyboard", keys: pendingMods, label: keyLabel(pendingMods) });
+  };
+  const onMouse = e => {
+    if (e.target === cancel) return;
+    e.preventDefault(); e.stopPropagation();
+    const r = { 0: ["mouse_left", "鼠标左键"], 1: ["mouse_middle", "鼠标中键"], 2: ["mouse_right", "鼠标右键"] }[e.button];
+    if (r) return done({ target: r[0], label: r[1] });
+    if (e.button === 3) return done({ target: "media", keys: [158], label: "浏览器后退" });
+    if (e.button === 4) return done({ target: "media", keys: [159], label: "浏览器前进" });
+  };
+  const block = e => { if (e.target !== cancel) { e.preventDefault(); e.stopPropagation(); } };
+  const timer = setInterval(() => { left -= 1; if (left <= 0) done(null); else tick(); }, 1000);
+  const listeners = [["keydown", onKeyDown], ["keyup", onKeyUp], ["mousedown", onMouse], ["contextmenu", block],
+    ["auxclick", block], ["click", block], ["mouseup", block]];
+  for (const [t, f] of listeners) window.addEventListener(t, f, true);
+  const finish = () => {
+    clearInterval(timer);
+    for (const [t, f] of listeners) window.removeEventListener(t, f, true);
+    ov.hidden = true; S.quick = null;
+    api("POST", "/api/suspend", { on: false }).catch(() => {});
+  };
+  S.quick = finish;
+  cancel.onclick = () => { finish(); footer("已取消快速映射。"); };
+}
+
+function keyLabel(codes) {
+  const name = c => { const k = S.keys && S.keys.keys.find(x => x.code === c); return k ? k.name : "KEY " + c; };
+  return codes.map(name).join(" + ");
+}
+
 // ---- controller drawing ------------------------------------------------------------------
 
 function buildPad() {
@@ -252,7 +333,7 @@ function buildPad() {
     el.addEventListener("click", () => {
       const p = S.prof.pad; if (!p) return;
       const id = c.ids.find(i => p.mappings.some(m => m.id === i));
-      if (id) { showTab("pad"); select("pad", id); const row = $(`#list-pad .item[data-id="${id}"]`); if (row) row.scrollIntoView({ block: "nearest" }); }
+      if (id) { showTab("pad"); select("pad", id); const row = $(`#list-pad .item[data-id="${id}"]`); if (row) row.scrollIntoView({ block: "center" }); }
       else footer("这个手柄没有报告对应的按键，可用“按键定位”找到它。");
     });
     g.append(el);
@@ -364,7 +445,7 @@ async function pollOnce() {
     const scope = st.learn_result.scope;
     await loadProfile(scope);
     showTab(scope); select(scope, st.learn_result.id);
-    const row = $(`#list-${scope} .item[data-id="${st.learn_result.id}"]`); if (row) row.scrollIntoView({ block: "nearest" });
+    const row = $(`#list-${scope} .item[data-id="${st.learn_result.id}"]`); if (row) row.scrollIntoView({ block: "center" });
   } else if (first) S.learnSeen = lr;
   if (S.tab === "settings") renderDevices();
   livePad(st);

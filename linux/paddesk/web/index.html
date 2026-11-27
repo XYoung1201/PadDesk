@@ -44,23 +44,27 @@
       <button data-tab="settings">设置</button>
     </nav>
 
-    <div class="tab" id="tab-pad">
+    <div class="tab split" id="tab-pad">
+      <div class="pinned">
       <div class="toolbar">
         <button id="locateBtn">按键定位</button>
         <button id="resetBtn" class="ghost">恢复默认</button>
         <span id="padCount" class="muted"></span>
       </div>
       <div class="editor" id="editor-pad"></div>
+      </div>
       <div class="list" id="list-pad"></div>
     </div>
 
-    <div class="tab" id="tab-remote" hidden>
+    <div class="tab split" id="tab-remote" hidden>
+      <div class="pinned">
       <div class="toolbar">
         <button id="learnBtn">学习按键</button>
         <button id="removeBtn" class="ghost">删除</button>
         <span id="remoteCount" class="muted"></span>
       </div>
       <div class="editor" id="editor-remote"></div>
+      </div>
       <div class="list" id="list-remote"></div>
     </div>
 
@@ -117,6 +121,14 @@
     <h3 id="learnTitle">请按下要识别的键</h3>
     <p id="learnText" class="muted"></p>
     <button id="learnCancel" class="ghost">取消</button>
+  </div>
+</div>
+<div id="quickOverlay" class="overlay" hidden>
+  <div class="dialog">
+    <h3 id="quickTitle">快速映射</h3>
+    <p id="quickText" class="muted"></p>
+    <p class="muted small">Alt+Tab、Super 等被桌面拦截的组合请用“键盘按键”里的勾选方式设置。</p>
+    <button id="quickCancel" class="ghost">取消</button>
   </div>
 </div>
 <script src="app.js"></script>

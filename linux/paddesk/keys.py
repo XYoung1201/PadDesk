@@ -139,5 +139,46 @@ BUTTON_LABELS = {
     0x13a: "返回 / Select", 0x13b: "开始 / Start", 0x13c: "Home", 0x13d: "左摇杆按下", 0x13e: "右摇杆按下",
     0x220: "方向上", 0x221: "方向下", 0x222: "方向左", 0x223: "方向右",
 }
+# Stick directions follow evdev: X grows to the right, Y grows downwards.
+STICKS = {0: "左摇杆", 1: "左摇杆", 3: "右摇杆", 4: "右摇杆"}
+TRIGGERS = {2, 5, 9, 10}
+HATS_X, HATS_Y = {0x10, 0x12}, {0x11, 0x13}
+
 AXIS_LABELS = {0: "左摇杆 X", 1: "左摇杆 Y", 2: "L2 / LT", 3: "右摇杆 X", 4: "右摇杆 Y", 5: "R2 / RT",
                9: "R2 / RT", 10: "L2 / LT", 0x10: "方向帽 X", 0x11: "方向帽 Y"}
+
+
+def axis_caption(code, direction):
+    """Readable name of one axis direction, e.g. "右摇杆 ↑" (ABS_RY −) or "方向帽 →"."""
+    plus = direction > 0
+    if code in STICKS:
+        arrow = ("→" if plus else "←") if code in (0, 3) else ("↓" if plus else "↑")
+        return STICKS[code] + " " + arrow
+    if code in HATS_X:
+        return "方向帽 " + ("→" if plus else "←")
+    if code in HATS_Y:
+        return "方向帽 " + ("↓" if plus else "↑")
+    base = AXIS_LABELS.get(code, "轴 %d" % code)
+    if code in TRIGGERS:
+        return base if plus else base + " −"
+    return base + (" +" if plus else " −")
+
+
+def legacy_axis_name(code, direction):
+    """The default name earlier versions stored for an axis direction ("右摇杆 Y +"), so it can be renamed."""
+    label = AXIS_LABELS.get(code, "")
+    if not label or code in TRIGGERS:
+        return None
+    return label + (" +" if direction > 0 else " −")
+
+
+# Face buttons are named by position in evdev (SOUTH/EAST/NORTH/WEST); the printed letter depends on the layout.
+FACE_LABELS = {
+    "xbox": {0x130: "A", 0x131: "B", 0x133: "Y", 0x134: "X"},
+    "nintendo": {0x130: "B", 0x131: "A", 0x133: "X", 0x134: "Y"},
+}
+
+
+def button_label(code, layout="xbox"):
+    faces = FACE_LABELS.get(layout, FACE_LABELS["xbox"])
+    return faces.get(code) or BUTTON_LABELS.get(code, "")

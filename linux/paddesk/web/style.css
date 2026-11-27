@@ -67,6 +67,12 @@ main { flex: 1; display: grid; grid-template-columns: minmax(320px, 1fr) minmax(
 .chips label { display: flex; align-items: center; gap: 4px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
 .chips input { margin: 0; }
 .list { display: flex; flex-direction: column; gap: 2px; }
+/* Mapping tabs: the toolbar and editor stay put while the button list scrolls underneath. */
+.tab.split { overflow: hidden; }
+.pinned { flex: none; display: flex; flex-direction: column; gap: 12px; background: var(--ink2); }
+.pinned .editor { max-height: 46vh; overflow: auto; }
+.tab.split .list { flex: 1; min-height: 0; overflow: auto; }
+.dialog .small { font-size: 12px; margin-top: 0; }
 .item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 10px; border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
 .item:hover { background: var(--ink3); }
 .item.sel { border-color: var(--gold); background: #24231f; }
@@ -95,5 +101,7 @@ footer { padding: 8px 20px; color: var(--muted); font-size: 12px; border-top: 1p
   main { grid-template-columns: 1fr; padding: 12px 16px; }
   .stage { position: static; }
   .panel { max-height: none; }
+  .tab.split, .tab.split .list { overflow: visible; }
+  .pinned { position: sticky; top: 0; z-index: 2; padding-bottom: 8px; border-bottom: 1px solid var(--ink3); }
   .top { padding: 10px 16px; }
 }

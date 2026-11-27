@@ -19,6 +19,11 @@ EV_SYN, EV_KEY, EV_ABS = 0, 1, 3
 SYN_REPORT, SYN_DROPPED = 0, 3
 KEY_F12 = 88
 CTRL = {29, 97}
+# Play/pause and track keys. Desktops such as Raspberry Pi OS (labwc / Wayfire) bind the volume keys but
+# leave these unbound, so a key press reaches no player. When the session agent (`paddesk agent`) is
+# running, these keys are handed to it and it drives media players over MPRIS on the session bus.
+BRIDGED = {164: "play-pause", 163: "next", 165: "previous", 166: "stop"}
+AGENT_TIMEOUT = 40.0
 ALT = {56, 100}
 
 
@@ -48,9 +53,7 @@ def create_profile(device_id, name, key_codes, axes):
                 target, label = hats[(code, sign)]
                 p.mappings.append(Mapping(Source("axis", code, sign, 0.0, 0.5), label, True, target, locked=True))
             elif code not in (keys.ABS["HAT0X"], keys.ABS["HAT0Y"]) and ((1 - rest) if sign > 0 else (rest + 1)) > 0.43:
-                label = keys.AXIS_LABELS.get(code, "")
-                if label and code not in (2, 5, 9, 10):
-                    label += " +" if sign > 0 else " −"
+                label = keys.axis_caption(code, sign) if code in keys.AXIS_LABELS else ""
                 p.mappings.append(Mapping(Source("axis", code, sign, round(rest, 4), 0.43), label))
     p.validate()
     return p
@@ -89,6 +92,11 @@ class Service:
         self.message = ""
         self.stopping = False
         self.last_stick = (0.0, 0.0)
+        self.media_cond = threading.Condition()
+        self.media_seq = 0
+        self.media_events = []   # (seq, code), newest last
+        self.agent_seen = -1e9
+        self.agent_waiting = 0
         try:
             self.remote_profile = store.load_profile(REMOTE_PROFILE_ID)
         except (InvalidProfile, ValueError, OSError) as ex:
@@ -140,7 +148,55 @@ class Service:
                 ids.add("remote:%s:%d" % (t.id, k))
         return Snapshot(True, REMOTE_PROFILE_ID, self.remote_profile.device_name, remote=ids)
 
-    def _apply(self, result):
+    def agent_connected(self, now=None):
+        now = self.clock() if now is None else now
+        return self.agent_waiting > 0 or now - self.agent_seen < AGENT_TIMEOUT
+
+    def _bridge(self, result):
+        """Takes play/pause and track keys out of the output and queues them for the session agent."""
+        if not self.agent_connected():
+            return
+        kept = []
+        for ev in result.events:
+            code = int(ev.token[2:]) if ev.token.startswith("K:") else 0
+            if code in BRIDGED:
+                if ev.down:
+                    with self.media_cond:
+                        self.media_seq += 1
+                        self.media_events = (self.media_events + [(self.media_seq, code)])[-32:]
+                        self.media_cond.notify_all()
+            else:
+                kept.append(ev)
+        result.events = kept
+
+    def media_wait(self, after, timeout=20.0):
+        """Long poll used by the session agent. Returns media actions newer than `after`."""
+        with self.media_cond:
+            self.agent_waiting += 1
+            self.agent_seen = self.clock()
+            try:
+                if after < 0 or after > self.media_seq:
+                    after = self.media_seq   # first call, or the service restarted: skip old presses
+                self.media_cond.wait_for(lambda: self.media_seq > after or self.stopping, timeout)
+                events = [{"seq": q, "code": c, "action": BRIDGED[c]} for q, c in self.media_events if q > after]
+                return {"seq": self.media_seq, "events": events}
+            finally:
+                self.agent_waiting -= 1
+                self.agent_seen = self.clock()
+
+    def media_fallback(self, code):
+        """The agent found no media player: send the key itself after all, as a tap."""
+        if code not in BRIDGED:
+            raise ValueError("不是媒体键。")
+        with self.lock:
+            from .engine import FrameResult, OutputEvent
+            r = FrameResult()
+            r.events = [OutputEvent("K:%d" % code, True), OutputEvent("K:%d" % code, False)]
+            self._apply(r, bridge=False)
+
+    def _apply(self, result, bridge=True):
+        if bridge:
+            self._bridge(result)
         try:
             self.output.apply(result)
         except OSError as ex:
@@ -246,6 +302,8 @@ class Service:
     def shutdown(self):
         with self.lock:
             self.stopping = True
+            with self.media_cond:
+                self.media_cond.notify_all()
             self.output.release_all()
             self.output.close()
             self.devices.close()
@@ -293,7 +351,7 @@ class Service:
             now = self.clock()
             return {
                 "version": __version__, "status": self.status_text(), "paused": self.paused, "busy": self.busy(now),
-                "message": self.message, "output_error": self.output_error,
+                "message": self.message, "output_error": self.output_error, "agent": self.agent_connected(now),
                 "learning": None if self.learn is None else {"scope": self.learn["scope"], "remaining": max(0, round(self.learn["deadline"] - now))},
                 "learn_result": self.learn_result,
                 "pad": {"id": pad.id, "name": pad.name} if pad else None,
@@ -309,7 +367,8 @@ class Service:
             p = self._scope_profile(scope)
             d = p.to_json()
             for m, j in zip(p.mappings, d["mappings"]):
-                j.update(id=m.input.id, caption=m.input.caption, output_label=m.output_label)
+                j.update(id=m.input.id, caption=m.input.caption, output_label=m.output_label,
+                         display=m.display_name(p.visual_layout))
             return {"rev": self.revs.get(p.device_id, 0), "profile": d}
 
     def save_profile(self, scope, data, rev):
@@ -395,9 +454,10 @@ class Service:
         else:
             m.confirmed = True
         self.learn_result = {"scope": scope, "id": src.id}
-        self.message = "已识别：%s" % m.physical
         self._bump(p)
         self._save(p)
+        if not self.message.startswith("保存失败"):
+            self.message = "已识别：%s" % m.display_name(p.visual_layout)
 
     def record_center(self):
         with self.lock:
