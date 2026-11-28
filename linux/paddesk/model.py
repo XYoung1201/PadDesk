@@ -5,8 +5,9 @@ import os
 import re
 
 from . import keys
+from .cec import ACTIONS as CEC_ACTIONS
 
-TARGETS = ["none", "mouse_left", "mouse_right", "mouse_middle", "keyboard", "media", "sequence",
+TARGETS = ["none", "mouse_left", "mouse_right", "mouse_middle", "keyboard", "media", "sequence", "cec",
            "up", "down", "left", "right"]
 STEP_TARGETS = {"up", "down", "left", "right"}
 KINDS = ["key", "axis", "remote"]
@@ -83,7 +84,7 @@ class Source:
 
 class Mapping:
     def __init__(self, source=None, name="", confirmed=False, target="none", codes=None, locked=False,
-                 steps=None, sequence_text="", sequence_mode="hog"):
+                 steps=None, sequence_text="", sequence_mode="hog", cec_action=""):
         self.input = source or Source()
         self.name = name
         self.confirmed = confirmed
@@ -93,6 +94,7 @@ class Mapping:
         self.steps = [list(s) for s in (steps or [])]
         self.sequence_text = sequence_text
         self.sequence_mode = sequence_mode
+        self.cec_action = cec_action
 
     @property
     def physical(self):
@@ -114,6 +116,8 @@ class Mapping:
             return {"up": "鼠标上移", "down": "鼠标下移", "left": "鼠标左移", "right": "鼠标右移"}[t] + (" · 固定" if self.locked else "")
         if t == "media":
             return "媒体 · " + (keys.name(self.keys[0]) if len(self.keys) == 1 else "未选择")
+        if t == "cec":
+            return "投影仪 · " + CEC_ACTIONS.get(self.cec_action, "未选择")
         if t == "sequence":
             return ("HOG · " if self.sequence_mode == "hog" else "序列 · ") + (self.sequence_text or describe(self.steps))
         return {"mouse_left": "鼠标左键", "mouse_right": "鼠标右键", "mouse_middle": "鼠标中键",
@@ -122,13 +126,15 @@ class Mapping:
     def to_json(self):
         return {"input": self.input.to_json(), "name": self.name, "confirmed": self.confirmed, "target": self.target,
                 "keys": self.keys, "locked": self.locked, "steps": self.steps,
-                "sequence_text": self.sequence_text, "sequence_mode": self.sequence_mode}
+                "sequence_text": self.sequence_text, "sequence_mode": self.sequence_mode,
+                "cec_action": self.cec_action}
 
     @classmethod
     def from_json(cls, d):
         return cls(Source.from_json(d.get("input") or {}), d.get("name", "") or "", bool(d.get("confirmed")),
                    d.get("target", "none") or "none", d.get("keys") or [], bool(d.get("locked")),
-                   d.get("steps") or [], d.get("sequence_text", "") or "", d.get("sequence_mode", "hog") or "hog")
+                   d.get("steps") or [], d.get("sequence_text", "") or "", d.get("sequence_mode", "hog") or "hog",
+                   d.get("cec_action", "") or "")
 
 
 # ---- key sequences --------------------------------------------------------------------------
@@ -293,6 +299,7 @@ class Profile:
                    or (m.target == "keyboard" and not m.keys)
                    or (m.target == "media" and (len(m.keys) != 1 or not keys.is_media(m.keys[0])))
                    or (m.target == "sequence" and not valid_steps(m.steps))
+                   or (m.target == "cec" and m.cec_action not in CEC_ACTIONS)
                    or (m.target in STEP_TARGETS and s.kind == "remote")
                    or (m.locked and m.target not in STEP_TARGETS)
                    or m.sequence_mode not in ("hog", "keys"))
@@ -391,6 +398,7 @@ class Store:
         d.setdefault("hog_config", "")
         d.setdefault("grab", {})
         d.setdefault("paused", False)
+        d.setdefault("cec_device", "/dev/cec1")
         return d
 
     def save_settings(self, d):

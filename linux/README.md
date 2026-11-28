@@ -45,12 +45,15 @@ paddesk            # 打开配置窗口
 paddesk status     # 查看状态
 paddesk pause | resume | toggle
 paddesk agent      # 媒体键助手（随桌面自动启动，打开配置窗口时也会自动拉起）
+paddesk cec on | standby | toggle | status   # HDMI-CEC 控制投影仪 / 电视
 journalctl -u paddesk -f    # 服务日志
 ```
 
 摇杆方向按实际方向命名（“右摇杆 ↑”等）。注意 evdev 中 Y 轴向下为正，旧版本显示的“右摇杆 Y +”其实是向下推，升级后会自动改名。
 
 **播放／暂停、上一曲、下一曲**：树莓派桌面（labwc／Wayfire）只处理音量键，不会把播放键转给播放器。因此安装时会在桌面自动启动 `paddesk agent`，它通过 MPRIS（`playerctl` 或 `gdbus`）直接控制正在播放的程序（Chromium 里的网页视频、VLC、mpv 等）；没有播放器时仍按普通按键发送。
+
+**投影仪开机／待机（HDMI-CEC）**：把任意手柄键或遥控键的输出设为“投影仪 / 电视（HDMI-CEC）”，可选开机、待机、开关切换（先查询电源状态再决定）。默认使用 `/dev/cec1`（树莓派 5 的 HDMI1），可在“设置 → 投影仪 · HDMI-CEC”中改为 `/dev/cec0`，那里也能直接测试开机、待机和查询状态。服务启动时会执行一次 `cec-ctl --playback` 把树莓派注册为播放设备（每次重启后都需要），之后发送 Image View On / Standby 给逻辑地址 0 的显示设备；若适配器失去配置会自动重新注册。需要 `v4l-utils`（安装脚本会装），服务用户加入 `video` 组以访问 `/dev/cec*`。
 
 配置保存在 `/var/lib/paddesk/profiles/`，每个手柄一个文件（按 USB VID:PID 和名称区分），遥控外设统一保存在 `remotes.json`。
 
@@ -91,6 +94,7 @@ sudo systemctl start paddesk
 | `paddesk/engine.py` | 按住状态、媒体键重复、序列播放、方向键步进、摇杆速度（移植自 `Engine.cs`） |
 | `paddesk/devices.py` | evdev 设备发现、分类、热插拔、独占 |
 | `paddesk/output.py` | uinput 虚拟键盘和鼠标 |
+| `paddesk/cec.py` | 通过 `cec-ctl` 控制投影仪 / 电视电源（HDMI-CEC） |
 | `paddesk/service.py` | 后台主循环、学习按键、暂停热键、供界面调用的操作 |
 | `paddesk/server.py` | 本机 HTTP 接口与静态页面 |
 | `paddesk/web/` | 配置界面 |

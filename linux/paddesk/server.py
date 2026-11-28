@@ -87,6 +87,10 @@ def make_handler(service):
                     return self._send(200, service.get_settings())
                 if route == ("POST", "/api/settings"):
                     return self._send(200, service.update_settings(body))
+                if route == ("GET", "/api/cec"):
+                    return self._send(200, service.cec_status())
+                if route == ("POST", "/api/cec"):
+                    return self._send(200, service.cec_action(str(body.get("action") or "")))
                 if route == ("POST", "/api/pause"):
                     service.set_paused(body.get("paused", not service.paused))
                 elif route == ("POST", "/api/select"):

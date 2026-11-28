@@ -23,6 +23,7 @@ class FrameResult:
     def __init__(self):
         self.dx = self.dy = 0
         self.events = []
+        self.actions = []   # one-shot actions started by a press, e.g. ("cec", "on")
         self.stick_x = self.stick_y = 0.0
 
 
@@ -162,6 +163,11 @@ class InputEngine:
                     self.repeat_gap.add(sid)
                 else:
                     desired.add(token)
+            elif t == "cec" and m.cec_action:
+                sid = m.input.id
+                now_active.add(sid)
+                if sid not in self.was_active:
+                    result.actions.append(("cec", m.cec_action))
             elif t == "sequence" and m.steps:
                 sid = m.input.id
                 now_active.add(sid)

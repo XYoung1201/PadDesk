@@ -9,6 +9,7 @@ echo "==> 安装依赖 (python3-evdev)"
 apt-get update -qq || true
 apt-get install -y python3 python3-evdev
 apt-get install -y libglib2.0-bin playerctl || true  # gdbus / playerctl for play-pause
+apt-get install -y v4l-utils || true                 # cec-ctl for projector power over HDMI-CEC
 if command -v fc-list >/dev/null && [ -z "$(fc-list :lang=zh 2>/dev/null | head -n1)" ]; then
   echo "==> 安装中文字体"
   apt-get install -y fonts-wqy-microhei || true
@@ -27,6 +28,7 @@ install -m 0644 "$HERE/packaging/paddesk-agent.desktop" /etc/xdg/autostart/padde
 echo "==> 创建服务用户并开放 uinput"
 id paddesk >/dev/null 2>&1 || useradd --system --no-create-home --home-dir /var/lib/paddesk --shell /usr/sbin/nologin paddesk
 usermod -a -G input paddesk
+usermod -a -G video paddesk   # /dev/cec* (HDMI-CEC)
 install -m 0644 "$HERE/packaging/70-paddesk-uinput.rules" /etc/udev/rules.d/70-paddesk-uinput.rules
 echo uinput > /etc/modules-load.d/paddesk.conf
 modprobe uinput || true

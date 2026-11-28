@@ -25,6 +25,7 @@ def main():
         error = "无法打开 /dev/uinput，鼠标键盘输出不可用：%s" % ex
         log.error(error)
     service = Service(store, DeviceManager(), output, output_error=error)
+    service.start_cec()
     httpd = server.start(service, listen)
     log.info("PadDesk %s · state %s · UI http://%s:%d/", __version__, state, listen[0], listen[1])
 
