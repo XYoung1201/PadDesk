@@ -107,6 +107,11 @@
         <p class="muted">HOG 目前没有 Linux 版。若把 HOG.conf 放在本机，可填写路径，让“按键序列”列出其中的热键。</p>
         <div class="row"><input id="hogPath" placeholder="/home/pi/.config/HOG/HOG.conf"><button id="hogSave" class="ghost">保存</button></div>
         <p id="hogInfo" class="muted"></p>
+        <h3>投影仪 · HDMI-CEC</h3>
+        <p class="muted">把手柄键或遥控键设为“投影仪 / 电视（HDMI-CEC）”即可开机、待机或切换。树莓派 5 的 HDMI0 是 <code>/dev/cec0</code>，HDMI1 是 <code>/dev/cec1</code>。服务启动时会自动注册为播放设备。</p>
+        <div class="row"><input id="cecDevice" placeholder="/dev/cec1"><button id="cecSave" class="ghost">保存</button></div>
+        <div class="row"><button id="cecOn" class="ghost">开机</button><button id="cecStandby" class="ghost">待机</button><button id="cecQuery" class="ghost">查询状态</button></div>
+        <p id="cecInfo" class="muted"></p>
         <h3>后台运行</h3>
         <p class="muted">映射由系统服务 <code>paddesk.service</code> 执行，开机自动启动；关闭这个窗口不影响映射。暂停 / 恢复：<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F12</kbd>，或终端执行 <code>paddesk toggle</code>。</p>
         <p class="muted" id="version"></p>

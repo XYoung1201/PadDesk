@@ -2,12 +2,13 @@
 Description=PadDesk gamepad / remote to mouse and keyboard mapping
 Documentation=https://github.com/XYoung1201/PadDesk/tree/main/linux
 After=systemd-udevd.service systemd-modules-load.service
+# video: access to /dev/cec* for projector power over HDMI-CEC
 
 [Service]
 Type=simple
 User=paddesk
 Group=paddesk
-SupplementaryGroups=input
+SupplementaryGroups=input video
 Environment=PYTHONPATH=/opt/paddesk
 Environment=PYTHONUNBUFFERED=1
 Environment=PADDESK_STATE=/var/lib/paddesk

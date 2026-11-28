@@ -6,8 +6,10 @@ const STEP = new Set(["up", "down", "left", "right"]);
 const TARGETS = [
   ["none", "未分配"], ["mouse_left", "鼠标左键"], ["mouse_right", "鼠标右键"], ["mouse_middle", "鼠标中键"],
   ["keyboard", "键盘按键"], ["media", "媒体键"], ["sequence", "按键序列 / HOG 热键"],
+  ["cec", "投影仪 / 电视（HDMI-CEC）"],
   ["up", "鼠标步进 · 上"], ["down", "鼠标步进 · 下"], ["left", "鼠标步进 · 左"], ["right", "鼠标步进 · 右"],
 ];
+const CEC = [["on", "开机"], ["standby", "待机"], ["toggle", "开关切换（先查询状态）"]];
 const MODS = [[29, "Ctrl"], [56, "Alt"], [42, "Shift"], [125, "Super"]];
 const AXIS_NAMES = { 0: "ABS_X 左摇杆 X", 1: "ABS_Y 左摇杆 Y", 2: "ABS_Z", 3: "ABS_RX 右摇杆 X", 4: "ABS_RY 右摇杆 Y", 5: "ABS_RZ", 16: "ABS_HAT0X", 17: "ABS_HAT0Y" };
 
@@ -188,6 +190,9 @@ function renderEditor(scope) {
       hogPick.append(h("option", { value: "" }, "从 HOG 配置选择…"), ...(S.hog ? S.hog.entries : []).map(e => h("option", { value: e.hotkey }, e.hotkey + "   ·   " + e.action)));
       extra.append(h("div", { class: "row" }, fields.mode, fields.text), hogPick, help);
       sync();
+    } else if (t === "cec") {
+      fields.cec = h("select", {}, CEC.map(([v, n]) => h("option", { value: v, selected: m.cec_action === v }, n)));
+      extra.append(fields.cec, h("p", { class: "muted" }, "按下时通过 HDMI-CEC 让投影仪开机或待机。设备在“设置”里选择，默认 /dev/cec1（HDMI1）。"));
     } else if (STEP.has(t)) {
       extra.append(h("p", { class: "muted" }, "按住时按“移动设置”里的步长移动鼠标，长按连续移动。"));
     }
@@ -202,7 +207,7 @@ function renderEditor(scope) {
 }
 
 function applyEdit(scope, id, name, target, f) {
-  let keysOut = [], seq = null;
+  let keysOut = [], seq = null, cec = "";
   if (target === "keyboard") {
     keysOut = f.mods.filter(x => x[1].checked).map(x => x[0]);
     if (f.key.value) keysOut.push(+f.key.value);
@@ -211,12 +216,13 @@ function applyEdit(scope, id, name, target, f) {
   else if (target === "sequence") {
     seq = { mode: f.mode.value, text: f.text.value.trim() };
     if (!seq.text) { footer("请输入按键序列。"); return; }
-  }
+  } else if (target === "cec") cec = f.cec.value;
   saveProfile(scope, p => {
     const m = p.mappings.find(x => x.id === id);
     m.name = name; m.target = target; m.keys = keysOut; m.confirmed = true;
     m.locked = STEP.has(target) && m.locked;
     if (seq) { m.sequence_mode = seq.mode; m.sequence_text = seq.text; }
+    m.cec_action = cec;
   }, "已应用到 " + (name || id));
 }
 
@@ -516,8 +522,22 @@ async function init() {
     try { S.settings = await api("POST", "/api/settings", { hog_config: $("#hogPath").value }); await loadHog(); footer("HOG 配置路径已保存"); }
     catch (e) { footer(e.message); }
   };
+  const cecDo = async (action, label) => {
+    $("#cecInfo").textContent = label + "…";
+    try {
+      const r = action === "status" ? await api("GET", "/api/cec") : await api("POST", "/api/cec", { action });
+      $("#cecInfo").textContent = r.message;
+    } catch (e) { $("#cecInfo").textContent = e.message; }
+  };
+  $("#cecSave").onclick = async () => {
+    try { S.settings = await api("POST", "/api/settings", { cec_device: $("#cecDevice").value }); $("#cecDevice").value = S.settings.cec_device; footer("CEC 设备已设为 " + S.settings.cec_device); }
+    catch (e) { footer(e.message); }
+  };
+  $("#cecOn").onclick = () => cecDo("on", "正在开机");
+  $("#cecStandby").onclick = () => cecDo("standby", "正在待机");
+  $("#cecQuery").onclick = () => cecDo("status", "正在查询");
   try { S.keys = await api("GET", "/api/keys"); S.settings = await api("GET", "/api/settings"); } catch (e) { /* service down: poll reports it */ }
-  if (S.settings) $("#hogPath").value = S.settings.hog_config;
+  if (S.settings) { $("#hogPath").value = S.settings.hog_config; $("#cecDevice").value = S.settings.cec_device || "/dev/cec1"; }
   await loadHog();
   await poll();
   if (S.state) $("#version").textContent = "PadDesk " + S.state.version;

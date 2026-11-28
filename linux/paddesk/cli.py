@@ -13,11 +13,12 @@ import urllib.request
 
 from .server import parse_listen
 
-USAGE = """用法: paddesk [ui|status|pause|resume|toggle|agent]
+USAGE = """用法: paddesk [ui|status|pause|resume|toggle|agent|cec]
   ui       打开配置界面（默认）。关闭窗口后后台服务继续运行。
   agent    桌面会话助手：把播放 / 暂停、上一曲、下一曲交给媒体播放器（随桌面自动启动）
   status   显示服务状态
   pause    暂停输出      resume  恢复输出      toggle  切换暂停
+  cec on|standby|toggle|status|init   通过 HDMI-CEC 控制投影仪 / 电视
 """
 
 
@@ -153,6 +154,19 @@ def main(argv=None):
             body = {} if cmd == "toggle" else {"paused": cmd == "pause"}
             print(call("POST", "/api/pause", body)["status"])
             return 0
+        if cmd == "cec" and len(args) == 2 and args[1] in ("on", "standby", "toggle", "status", "init"):
+            if args[1] == "status":
+                r = call("GET", "/api/cec", timeout=20)
+            else:
+                r = call("POST", "/api/cec", {"action": args[1]}, timeout=20)
+            print(r["message"])
+            return 0 if args[1] != "status" or r["power"] else 1
+    except urllib.error.HTTPError as ex:
+        try:
+            print(json.loads(ex.read().decode())["error"], file=sys.stderr)
+        except (ValueError, KeyError, OSError):
+            print("PadDesk 服务返回错误 %d" % ex.code, file=sys.stderr)
+        return 1
     except (urllib.error.URLError, OSError) as ex:
         print("无法连接 PadDesk 服务: %s" % ex, file=sys.stderr)
         return 1

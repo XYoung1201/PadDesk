@@ -8,6 +8,7 @@ import threading
 import time
 
 from . import __version__, keys
+from .cec import CecController, CecError, valid_device
 from .engine import CaptureDetector, InputEngine
 from .model import (REMOTE_PROFILE_ID, InvalidProfile, Mapping, Profile, SequenceError, Snapshot, Source,
                     load_hog_config, parse_sequence)
@@ -73,7 +74,7 @@ class NullOutput:
 
 
 class Service:
-    def __init__(self, store, devices, output, clock=time.monotonic, output_error=""):
+    def __init__(self, store, devices, output, clock=time.monotonic, output_error="", cec=None):
         self.lock = threading.RLock()
         self.store = store
         self.devices = devices
@@ -97,6 +98,8 @@ class Service:
         self.media_events = []   # (seq, code), newest last
         self.agent_seen = -1e9
         self.agent_waiting = 0
+        self.cec = cec or CecController(self.settings.get("cec_device", ""))
+        self.cec.on_result = self._cec_result
         try:
             self.remote_profile = store.load_profile(REMOTE_PROFILE_ID)
         except (InvalidProfile, ValueError, OSError) as ex:
@@ -194,9 +197,20 @@ class Service:
             r.events = [OutputEvent("K:%d" % code, True), OutputEvent("K:%d" % code, False)]
             self._apply(r, bridge=False)
 
+    def _cec_result(self, text):
+        self.message = text
+
+    def start_cec(self):
+        """Registers as a CEC playback device once at startup (needed again after every reboot)."""
+        if self.cec.available():
+            self.cec.init_async()
+
     def _apply(self, result, bridge=True):
         if bridge:
             self._bridge(result)
+        for kind, arg in result.actions:
+            if kind == "cec":
+                self.cec.submit(arg)
         try:
             self.output.apply(result)
         except OSError as ex:
@@ -307,6 +321,7 @@ class Service:
             self.output.release_all()
             self.output.close()
             self.devices.close()
+        self.cec.stop()
 
     # ---- API used by the configuration UI ------------------------------------------------------
 
@@ -388,6 +403,8 @@ class Service:
                     m.keys = []
                 if m.target != "sequence":
                     m.steps = []
+                if m.target != "cec":
+                    m.cec_action = ""
             p.validate()
             if scope == "remote":
                 p.stick_enabled = False
@@ -483,14 +500,46 @@ class Service:
 
     def get_settings(self):
         with self.lock:
-            return {"hog_config": self.settings.get("hog_config", ""), "grab": dict(self.settings.get("grab", {}))}
+            return {"hog_config": self.settings.get("hog_config", ""), "grab": dict(self.settings.get("grab", {})),
+                    "cec_device": self.cec.device}
 
     def update_settings(self, data):
         with self.lock:
             if "hog_config" in data:
                 self.settings["hog_config"] = str(data["hog_config"] or "").strip()
+            if "cec_device" in data:
+                dev = str(data["cec_device"] or "").strip()
+                if dev.isdigit():
+                    dev = "/dev/cec" + dev
+                if not valid_device(dev):
+                    raise ValueError("CEC 设备应为 /dev/cec0、/dev/cec1 这样的路径。")
+                self.cec.set_device(dev)
+                self.settings["cec_device"] = dev
             if "grab" in data and isinstance(data["grab"], dict):
                 self.settings["grab"] = {str(k): True for k, v in data["grab"].items() if v}
             self.store.save_settings(self.settings)
             self._apply_grabs()
             return self.get_settings()
+
+    # ---- HDMI-CEC (projector power) --------------------------------------------------------------
+
+    def cec_status(self):
+        """Asks the display for its power state. Runs cec-ctl, so it may take a moment."""
+        out = {"device": self.cec.device, "available": self.cec.available(), "power": None}
+        if not out["available"]:
+            out["message"] = "找不到 cec-ctl，请安装 v4l-utils（重新运行 install.sh 即可）。"
+            return out
+        try:
+            out["power"] = self.cec.query()
+        except CecError:
+            pass
+        out["message"] = self.cec.last
+        return out
+
+    def cec_action(self, action):
+        try:
+            text = self.cec.init() if action == "init" else self.cec.run(action)
+        except CecError as ex:
+            raise LookupError(str(ex))
+        self.message = text
+        return {"device": self.cec.device, "message": text, "power": self.cec.power}
